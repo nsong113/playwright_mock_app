@@ -5,10 +5,13 @@ import {
   isChargingAtom,
   isStandbyModeAtom,
   currentLocationAtom,
+  targetLocationAtom,
   errorAtom,
   arrivalModalOpenAtom,
+  lowBatteryModalOpenAtom,
+  criticalBatteryModalOpenAtom,
 } from "@/store";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useEventLogger } from "./useEventLogger";
 
 // Window 인터페이스 확장
@@ -27,13 +30,22 @@ declare global {
 
 export function useMockBridge() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
-  const setBatteryLevel = useSetRecoilState(batteryLevelAtom);
+  const [batteryLevel, setBatteryLevel] = useRecoilState(batteryLevelAtom);
   const setIsCharging = useSetRecoilState(isChargingAtom);
   const setIsStandbyMode = useRecoilState(isStandbyModeAtom)[1];
   const setCurrentLocation = useSetRecoilState(currentLocationAtom);
+  const setTargetLocation = useSetRecoilState(targetLocationAtom);
   const setError = useSetRecoilState(errorAtom);
   const setArrivalModalOpen = useSetRecoilState(arrivalModalOpenAtom);
+  const setLowBatteryModalOpen = useSetRecoilState(lowBatteryModalOpenAtom);
+  const setCriticalBatteryModalOpen = useSetRecoilState(
+    criticalBatteryModalOpenAtom
+  );
   const { logEvent } = useEventLogger();
+
+  // 배터리 모달이 이미 표시되었는지 추적 (중복 방지)
+  const lowBatteryModalShown = useRef(false);
+  const criticalBatteryModalShown = useRef(false);
 
   // 상태 변경 추적
   useEffect(() => {
@@ -48,7 +60,23 @@ export function useMockBridge() {
       console.log("[Mock Bridge] Arrival:", location);
       logEvent("event", "bridge", `도착: ${location}`, { location });
       setCurrentLocation(location);
-      setRobotState("IDLE");
+      setTargetLocation(null); // 목적지 초기화
+
+      // Home Base에 도착하면 CHARGING 상태로 변경
+      if (location === "Home Base") {
+        setRobotState("CHARGING");
+        setIsCharging(true);
+        logEvent("state-change", "system", "상태 변경: MOVING → CHARGING", {
+          from: "MOVING",
+          to: "CHARGING",
+          location: "Home Base",
+        });
+        logEvent("event", "bridge", "Home Base 도착 - 충전 시작", {
+          location: "Home Base",
+        });
+      } else {
+        setRobotState("IDLE");
+      }
       // 도착 모달 열기
       setArrivalModalOpen(true);
     };
@@ -61,6 +89,34 @@ export function useMockBridge() {
           level: battery,
         });
         setBatteryLevel(battery);
+
+        // 배터리 레벨에 따른 모달 표시
+        // 10% 이하: 위험 모달 (한 번만 표시)
+        if (
+          battery <= 10 &&
+          !criticalBatteryModalShown.current &&
+          robotState !== "CHARGING" &&
+          robotState !== "MOVING"
+        ) {
+          criticalBatteryModalShown.current = true;
+          setCriticalBatteryModalOpen(true);
+        }
+        // 25% 이하: 경고 모달 (한 번만 표시, 10% 이상일 때만)
+        else if (
+          battery <= 25 &&
+          battery > 10 &&
+          !lowBatteryModalShown.current &&
+          robotState !== "CHARGING" &&
+          robotState !== "MOVING"
+        ) {
+          lowBatteryModalShown.current = true;
+          setLowBatteryModalOpen(true);
+        }
+        // 배터리가 다시 충분해지면 플래그 리셋
+        if (battery > 25) {
+          lowBatteryModalShown.current = false;
+          criticalBatteryModalShown.current = false;
+        }
       }
     };
 
@@ -122,9 +178,49 @@ export function useMockBridge() {
     setIsCharging,
     setIsStandbyMode,
     setCurrentLocation,
+    setTargetLocation,
     setError,
     setArrivalModalOpen,
+    setLowBatteryModalOpen,
+    setCriticalBatteryModalOpen,
+    robotState,
     logEvent,
+  ]);
+
+  // 배터리 레벨이 변경될 때 모달 체크
+  useEffect(() => {
+    // 배터리 레벨에 따른 모달 표시
+    // 10% 이하: 위험 모달 (한 번만 표시)
+    if (
+      batteryLevel <= 10 &&
+      !criticalBatteryModalShown.current &&
+      robotState !== "CHARGING" &&
+      robotState !== "MOVING"
+    ) {
+      criticalBatteryModalShown.current = true;
+      setCriticalBatteryModalOpen(true);
+    }
+    // 25% 이하: 경고 모달 (한 번만 표시, 10% 이상일 때만)
+    else if (
+      batteryLevel <= 25 &&
+      batteryLevel > 10 &&
+      !lowBatteryModalShown.current &&
+      robotState !== "CHARGING" &&
+      robotState !== "MOVING"
+    ) {
+      lowBatteryModalShown.current = true;
+      setLowBatteryModalOpen(true);
+    }
+    // 배터리가 다시 충분해지면 플래그 리셋
+    if (batteryLevel > 25) {
+      lowBatteryModalShown.current = false;
+      criticalBatteryModalShown.current = false;
+    }
+  }, [
+    batteryLevel,
+    robotState,
+    setLowBatteryModalOpen,
+    setCriticalBatteryModalOpen,
   ]);
 
   // 수동으로 이벤트 트리거하는 함수들 (테스트/디버깅용)

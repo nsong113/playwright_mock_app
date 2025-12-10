@@ -1,5 +1,10 @@
-import { useRecoilState } from "recoil";
-import { robotStateAtom } from "@/store";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  robotStateAtom,
+  batteryLevelAtom,
+  batteryInsufficientModalOpenAtom,
+  targetLocationAtom,
+} from "@/store";
 import { LocationCard } from "./LocationCard";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { MockBridgeControl } from "./MockBridgeControl";
@@ -15,14 +20,32 @@ const locations = [
 
 export function GuideSection() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
+  const batteryLevel = useRecoilValue(batteryLevelAtom);
+  const setBatteryInsufficientModalOpen = useRecoilState(
+    batteryInsufficientModalOpenAtom
+  )[1];
+  const setTargetLocation = useSetRecoilState(targetLocationAtom);
   const { logEvent } = useEventLogger();
 
   const handleLocationClick = (location: string) => {
     if (robotState === "MOVING") {
       return; // 이미 이동 중이면 무시
     }
+
+    // 배터리가 10% 이하면 이동 방지 (CHARGING 상태여도)
+    if (batteryLevel <= 10) {
+      setBatteryInsufficientModalOpen(true);
+      logEvent("event", "bridge", "배터리 부족으로 이동 취소", {
+        batteryLevel,
+        attemptedLocation: location,
+        robotState,
+      });
+      return;
+    }
+
     logEvent("event", "bridge", `이동 시작: ${location}`, { location });
     setRobotState("MOVING");
+    setTargetLocation(location); // 이동 목적지 설정
     // 실제로는 Bridge를 통해 이동 명령을 보내고, 도착 이벤트를 기다림
     // 여기서는 시뮬레이션을 위해 3초 후 자동으로 도착 이벤트 트리거
     setTimeout(() => {

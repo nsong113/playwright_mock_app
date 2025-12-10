@@ -5,11 +5,15 @@ import {
   isChargingAtom,
   isStandbyModeAtom,
   currentLocationAtom,
+  targetLocationAtom,
   streamingTextAtom,
   isStreamingAtom,
   errorAtom,
   arrivalModalOpenAtom,
   seedConfigAtom,
+  lowBatteryModalOpenAtom,
+  criticalBatteryModalOpenAtom,
+  batteryInsufficientModalOpenAtom,
 } from "@/store";
 import { useEventLogger } from "./useEventLogger";
 import { useCallback } from "react";
@@ -43,11 +47,19 @@ export function useResetAndSeed() {
   const setIsCharging = useSetRecoilState(isChargingAtom);
   const setIsStandbyMode = useSetRecoilState(isStandbyModeAtom);
   const setCurrentLocation = useSetRecoilState(currentLocationAtom);
+  const setTargetLocation = useSetRecoilState(targetLocationAtom);
   const setStreamingText = useSetRecoilState(streamingTextAtom);
   const setIsStreaming = useSetRecoilState(isStreamingAtom);
   const setError = useSetRecoilState(errorAtom);
   const setArrivalModalOpen = useSetRecoilState(arrivalModalOpenAtom);
   const setSeedConfig = useSetRecoilState(seedConfigAtom);
+  const setLowBatteryModalOpen = useSetRecoilState(lowBatteryModalOpenAtom);
+  const setCriticalBatteryModalOpen = useSetRecoilState(
+    criticalBatteryModalOpenAtom
+  );
+  const setBatteryInsufficientModalOpen = useSetRecoilState(
+    batteryInsufficientModalOpenAtom
+  );
   const { logEvent, clearLogs } = useEventLogger();
 
   const reset = useCallback(() => {
@@ -56,10 +68,14 @@ export function useResetAndSeed() {
     setIsCharging(false);
     setIsStandbyMode(false);
     setCurrentLocation(null);
+    setTargetLocation(null);
     setStreamingText("");
     setIsStreaming(false);
     setError(null);
     setArrivalModalOpen(false);
+    setLowBatteryModalOpen(false);
+    setCriticalBatteryModalOpen(false);
+    setBatteryInsufficientModalOpen(false);
     clearLogs();
     setSeedConfig(null);
 
@@ -70,10 +86,14 @@ export function useResetAndSeed() {
     setIsCharging,
     setIsStandbyMode,
     setCurrentLocation,
+    setTargetLocation,
     setStreamingText,
     setIsStreaming,
     setError,
     setArrivalModalOpen,
+    setLowBatteryModalOpen,
+    setCriticalBatteryModalOpen,
+    setBatteryInsufficientModalOpen,
     clearLogs,
     setSeedConfig,
     logEvent,

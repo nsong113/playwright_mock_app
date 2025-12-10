@@ -31,6 +31,12 @@ export const currentLocationAtom = atom<string | null>({
   default: null,
 });
 
+// 이동 목적지
+export const targetLocationAtom = atom<string | null>({
+  key: "targetLocationAtom",
+  default: null,
+});
+
 // SSE 스트리밍 텍스트
 export const streamingTextAtom = atom<string>({
   key: "streamingTextAtom",
@@ -71,4 +77,22 @@ export const networkStatusAtom = atom<NetworkStatus>({
 export const seedConfigAtom = atom<SeedConfig | null>({
   key: "seedConfigAtom",
   default: null,
+});
+
+// 배터리 경고 모달 (25%)
+export const lowBatteryModalOpenAtom = atom<boolean>({
+  key: "lowBatteryModalOpenAtom",
+  default: false,
+});
+
+// 배터리 위험 모달 (10% 이하)
+export const criticalBatteryModalOpenAtom = atom<boolean>({
+  key: "criticalBatteryModalOpenAtom",
+  default: false,
+});
+
+// 배터리 부족으로 인한 이동 방지 모달
+export const batteryInsufficientModalOpenAtom = atom<boolean>({
+  key: "batteryInsufficientModalOpenAtom",
+  default: false,
 });

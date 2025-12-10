@@ -4,6 +4,8 @@ import { GuideSection } from "./components/GuideSection";
 import { ErrorModal } from "./components/ErrorModal";
 import { MovingModal } from "./components/MovingModal";
 import { ArrivalModal } from "./components/ArrivalModal";
+import { BatteryWarningModal } from "./components/BatteryWarningModal";
+import { BatteryInsufficientModal } from "./components/BatteryInsufficientModal";
 import { EventLogPanel } from "./components/EventLogPanel";
 import { NetworkToggle } from "./components/NetworkToggle";
 import { ResetSeedControls } from "./components/ResetSeedControls";
@@ -37,6 +39,8 @@ function AppContent() {
       <ErrorModal />
       <MovingModal />
       <ArrivalModal />
+      <BatteryWarningModal />
+      <BatteryInsufficientModal />
 
       {/* 컨트롤 패널 (상단 우측) */}
       <div className="flex fixed top-4 right-4 z-40 gap-3 items-center">

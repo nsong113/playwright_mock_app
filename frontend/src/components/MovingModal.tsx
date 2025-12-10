@@ -1,9 +1,9 @@
 import { useRecoilValue } from "recoil";
-import { robotStateAtom, currentLocationAtom } from "@/store";
+import { robotStateAtom, targetLocationAtom } from "@/store";
 
 export function MovingModal() {
   const robotState = useRecoilValue(robotStateAtom);
-  const currentLocation = useRecoilValue(currentLocationAtom);
+  const targetLocation = useRecoilValue(targetLocationAtom);
 
   if (robotState !== "MOVING") return null;
 
@@ -14,8 +14,8 @@ export function MovingModal() {
           <div className="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
           <h2 className="text-xl font-bold mb-2">이동 중</h2>
           <p className="text-gray-600">
-            {currentLocation
-              ? `${currentLocation}로 이동 중입니다...`
+            {targetLocation
+              ? `${targetLocation}로 이동 중입니다...`
               : "이동 중입니다..."}
           </p>
         </div>
