@@ -1,5 +1,11 @@
 import { atom } from "recoil";
-import { RobotState, EventLog, NetworkStatus, SeedConfig } from "@/types";
+import {
+  RobotState,
+  EventLog,
+  NetworkStatus,
+  SeedConfig,
+  Suggestion,
+} from "@/types";
 
 // 로봇 상태
 export const robotStateAtom = atom<RobotState>({
@@ -107,4 +113,20 @@ export const isEmergencyStoppedAtom = atom<boolean>({
 export const movementTimeoutIdAtom = atom<NodeJS.Timeout | null>({
   key: "movementTimeoutIdAtom",
   default: null,
+});
+
+// 추천 질문 목록 (하드코딩)
+export const suggestionsAtom = atom<Suggestion[]>({
+  key: "suggestionsAtom",
+  default: [
+    { id: 1, text: "Physical AI에 대해서 설명해줘" },
+    { id: 2, text: "여기서 제일 핫한 전시가 뭐야?" },
+    { id: 3, text: "어떤 AI 모델을 가지고 있어?" },
+  ],
+});
+
+// 네트워크 에러 모달 표시 여부
+export const networkErrorModalOpenAtom = atom<boolean>({
+  key: "networkErrorModalOpenAtom",
+  default: false,
 });

@@ -16,6 +16,7 @@ import {
   batteryInsufficientModalOpenAtom,
   isEmergencyStoppedAtom,
   movementTimeoutIdAtom,
+  networkErrorModalOpenAtom,
 } from "@/store";
 import { useEventLogger } from "./useEventLogger";
 import { useCallback } from "react";
@@ -64,6 +65,7 @@ export function useResetAndSeed() {
   );
   const setIsEmergencyStopped = useSetRecoilState(isEmergencyStoppedAtom);
   const setMovementTimeoutId = useSetRecoilState(movementTimeoutIdAtom);
+  const setNetworkErrorModalOpen = useSetRecoilState(networkErrorModalOpenAtom);
   const { logEvent, clearLogs } = useEventLogger();
 
   const reset = useCallback(() => {
@@ -81,6 +83,7 @@ export function useResetAndSeed() {
     setCriticalBatteryModalOpen(false);
     setBatteryInsufficientModalOpen(false);
     setIsEmergencyStopped(false);
+    setNetworkErrorModalOpen(false);
     // 진행 중인 timeout 취소
     setMovementTimeoutId((timeoutId) => {
       if (timeoutId) {
@@ -108,6 +111,7 @@ export function useResetAndSeed() {
     setBatteryInsufficientModalOpen,
     setIsEmergencyStopped,
     setMovementTimeoutId,
+    setNetworkErrorModalOpen,
     clearLogs,
     setSeedConfig,
     logEvent,

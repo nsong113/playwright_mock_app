@@ -48,3 +48,9 @@ export interface SeedConfig {
   seed: string;
   scenario: string;
 }
+
+// 추천 질문 타입
+export interface Suggestion {
+  id: number;
+  text: string;
+}

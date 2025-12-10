@@ -6,17 +6,21 @@ import { MovingModal } from "./components/MovingModal";
 import { ArrivalModal } from "./components/ArrivalModal";
 import { BatteryWarningModal } from "./components/BatteryWarningModal";
 import { BatteryInsufficientModal } from "./components/BatteryInsufficientModal";
+import { NetworkErrorModal } from "./components/NetworkErrorModal";
 import { EventLogPanel } from "./components/EventLogPanel";
 import { NetworkToggle } from "./components/NetworkToggle";
 import { ResetSeedControls } from "./components/ResetSeedControls";
 import { useMockBridge } from "./hooks/useMockBridge";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
+import { useSuggestions } from "./hooks/useSuggestions";
 
 function AppContent() {
   // Bridge 이벤트 리스너 초기화
   useMockBridge();
   // 네트워크 상태 관리
   useNetworkStatus();
+  // 네트워크 에러 모달 재시도 핸들러
+  const { handleRetry } = useSuggestions();
 
   return (
     <div className="flex flex-col w-screen h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -41,6 +45,7 @@ function AppContent() {
       <ArrivalModal />
       <BatteryWarningModal />
       <BatteryInsufficientModal />
+      <NetworkErrorModal onRetry={handleRetry} />
 
       {/* 컨트롤 패널 (상단 우측) */}
       <div className="flex fixed top-4 right-4 z-40 gap-3 items-center">

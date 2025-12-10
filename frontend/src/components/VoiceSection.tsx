@@ -2,39 +2,38 @@ import { useRecoilValue } from "recoil";
 import { streamingTextAtom, isStreamingAtom } from "@/store";
 import { useMockSSE } from "@/hooks/useMockSSE";
 import { StateMachine } from "./StateMachine";
+import { SuggestionCards } from "./SuggestionCards";
 import { IoIosSettings } from "react-icons/io";
-import { useEffect } from "react";
 
 export function VoiceSection() {
   const streamingText = useRecoilValue(streamingTextAtom);
   const isStreaming = useRecoilValue(isStreamingAtom);
   const { startStream, stopStream } = useMockSSE();
 
-  useEffect(() => {
-    console.log("streamingText updated:", streamingText);
-  }, [streamingText]);
-
-  const handleStartNormal = () => {
-    startStream(
+  const handleStartNormal = async () => {
+    await startStream(
       "안녕하세요! 로봇 안내 시스템입니다. 어떤 도움이 필요하신가요?",
       "normal"
     );
   };
 
-  const handleStartDelay = () => {
-    startStream("이 메시지는 지연 모드로 전송됩니다.", "delay");
+  const handleStartDelay = async () => {
+    await startStream("이 메시지는 지연 모드로 전송됩니다.", "delay");
   };
 
-  const handleStartMissing = () => {
-    startStream("이 메시지는 일부 청크가 누락될 수 있습니다.", "missing");
+  const handleStartMissing = async () => {
+    await startStream("이 메시지는 일부 청크가 누락될 수 있습니다.", "missing");
   };
 
-  const handleStartDuplicate = () => {
-    startStream("이 메시지는 일부 청크가 중복될 수 있습니다.", "duplicate");
+  const handleStartDuplicate = async () => {
+    await startStream(
+      "이 메시지는 일부 청크가 중복될 수 있습니다.",
+      "duplicate"
+    );
   };
 
-  const handleStartError = () => {
-    startStream("이 메시지는 중간에 에러가 발생합니다.", "error");
+  const handleStartError = async () => {
+    await startStream("이 메시지는 중간에 에러가 발생합니다.", "error");
   };
 
   return (
@@ -62,10 +61,17 @@ export function VoiceSection() {
         </h3>
         <p className="mb-3 text-xs text-gray-500">
           Server-Sent Events를 통해 실시간 텍스트 스트리밍을 테스트합니다. 각
-          모드별로 다른 시나리오를 시뮬레이션합니다.
+          모드별로 다른 시나리오를 시뮬레이션합니다. 40%의 확률로 500 에러가
+          발생하도록 설정했습니다.
         </p>
 
-        <div className="flex flex-wrap gap-2 mb-3">
+        {/* 추천 질문 카드 영역 */}
+        <div className="flex flex-col mt-4 flex-start">
+          <SuggestionCards />
+        </div>
+
+        {/* 상태 코드 */}
+        <div className="flex flex-wrap gap-2 mb-3 w-full">
           <button
             onClick={handleStartNormal}
             disabled={isStreaming}
@@ -113,7 +119,7 @@ export function VoiceSection() {
 
         {/* 스트리밍 텍스트 표시 영역 */}
         <div
-          className="h-[400px] p-4 bg-white rounded-lg shadow-md border border-gray-200 overflow-y-auto"
+          className="h-[150px] p-4 bg-white rounded-lg shadow-md border border-gray-200 overflow-y-auto"
           data-streaming={isStreaming}
         >
           {isStreaming && (

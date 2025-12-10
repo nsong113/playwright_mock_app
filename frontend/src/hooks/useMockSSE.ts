@@ -1,5 +1,9 @@
-import { useRecoilState } from "recoil";
-import { streamingTextAtom, isStreamingAtom } from "@/store";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import {
+  streamingTextAtom,
+  isStreamingAtom,
+  networkErrorModalOpenAtom,
+} from "@/store";
 import { SSEChunk } from "@/types";
 import { useCallback, useRef } from "react";
 import { useEventLogger } from "./useEventLogger";
@@ -9,140 +13,177 @@ type SSEMode = "normal" | "delay" | "missing" | "duplicate" | "error";
 export function useMockSSE() {
   const [streamingText, setStreamingText] = useRecoilState(streamingTextAtom);
   const [isStreaming, setIsStreaming] = useRecoilState(isStreamingAtom);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const setNetworkErrorModalOpen = useSetRecoilState(networkErrorModalOpenAtom);
   const { logEvent } = useEventLogger();
 
   const startStream = useCallback(
-    (
-      message: string = "Hello! This is a streaming response.",
+    async (
+      question: string = "안녕하세요! 로봇 안내 시스템입니다.",
       mode: SSEMode = "normal"
     ) => {
       // 기존 연결 종료
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
       setStreamingText("");
       setIsStreaming(true);
+      setNetworkErrorModalOpen(false);
 
-      logEvent("event", "sse", `스트림 시작: ${mode} 모드`, { mode, message });
+      logEvent("event", "sse", `스트림 시작: ${mode} 모드`, { mode, question });
 
-      // EventSource는 브라우저 네이티브 API라 Vite 프록시를 거치지 않음
-      // 따라서 전체 URL을 사용해야 함
-      const url = `http://localhost:3001/api/stream/chat?mode=${mode}&message=${encodeURIComponent(
-        message
-      )}`;
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
-      console.log("Connecting to SSE endpoint:", url);
-      const eventSource = new EventSource(url);
-      eventSourceRef.current = eventSource;
+      try {
+        console.log("[useMockSSE] Sending POST request to /api/suggestions", {
+          question,
+          mode,
+        });
 
-      // 연결 성공 시
-      eventSource.onopen = () => {
-        console.log("SSE connection opened");
-        logEvent("event", "sse", "스트림 연결 성공", {});
-      };
+        const url = new URL("http://localhost:3001/api/suggestions");
 
-      eventSource.onmessage = (event) => {
-        console.log("SSE message received:", event.data);
-        try {
-          const data: SSEChunk = JSON.parse(event.data);
-          console.log("Parsed SSE data:", data);
+        const response = await fetch(url.toString(), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+          body: JSON.stringify({ question, mode }),
+          signal: abortController.signal,
+        });
 
-          if (data.error) {
-            console.error("SSE Error:", data.error);
-            logEvent("event", "sse", `스트림 에러: ${data.error}`, {
-              error: data.error,
+        console.log("[useMockSSE] Response received", {
+          status: response.status,
+          ok: response.ok,
+        });
+
+        // 500 에러 처리
+        if (!response.ok) {
+          if (response.status === 500) {
+            const errorData = await response.json().catch(() => ({}));
+            logEvent("event", "network", "네트워크 오류 발생 (500)", {
+              status: response.status,
+              error: errorData,
             });
+            setNetworkErrorModalOpen(true);
             setIsStreaming(false);
-            eventSource.close();
             return;
           }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-          if (data.done) {
-            console.log("SSE stream done");
+        // SSE 스트림 읽기
+        if (!response.body) {
+          throw new Error("Response body is null");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        logEvent("event", "sse", "스트림 연결 성공", {});
+        console.log("[useMockSSE] Stream reader created, starting to read...");
+
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            console.log("[useMockSSE] SSE stream done");
             logEvent("event", "sse", "스트림 완료", {});
             setIsStreaming(false);
-            eventSource.close();
-            return;
+            break;
           }
 
-          if (data.chunk) {
-            console.log("SSE chunk received:", data.chunk);
-            // 청크 수신 로그 (실제 백엔드 데이터 - 포스트맨처럼 표시)
-            logEvent("event", "sse", `청크 수신: "${data.chunk}"`, {
-              chunk: data.chunk,
-              index: data.index,
-              duplicate: data.duplicate || false,
-            });
-            setStreamingText((prev) => {
-              // 중복 방지 (duplicate 모드 테스트용)
-              const chunk = data.chunk!;
-              if (data.duplicate && prev.includes(chunk)) {
-                console.log("Duplicate chunk ignored:", chunk);
-                return prev;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            // 여러 SSE 메시지가 한 번에 올 수 있으므로 분리
+            const messages = buffer.split("\n\n");
+            buffer = messages.pop() || "";
+
+            for (const message of messages) {
+              if (!message.trim()) continue;
+
+              // 주석 라인(`: `로 시작)은 무시
+              if (message.trim().startsWith(": ")) {
+                continue;
               }
-              const newText = prev + chunk;
-              console.log("Updated streaming text:", newText);
-              return newText;
-            });
-          } else {
-            console.warn("SSE message received but no chunk field:", data);
-          }
-        } catch (error) {
-          console.error(
-            "Failed to parse SSE data:",
-            error,
-            "Raw data:",
-            event.data
-          );
-          logEvent("event", "sse", `파싱 에러: ${String(error)}`, {
-            error: String(error),
-            rawData: event.data,
-          });
-        }
-      };
 
-      let errorLogged = false;
+              if (message.trim() && message.startsWith("data: ")) {
+                const dataStr = message.slice(6).trim();
+                try {
+                  const data: SSEChunk = JSON.parse(dataStr);
 
-      eventSource.onerror = (error) => {
-        console.error("SSE connection error:", error);
-        console.error("EventSource readyState:", eventSource.readyState);
-        console.error("EventSource URL:", eventSource.url);
+                  if (data.error) {
+                    console.error("[useMockSSE] SSE Error:", data.error);
+                    logEvent("event", "sse", `스트림 에러: ${data.error}`, {
+                      error: data.error,
+                    });
+                    setIsStreaming(false);
+                    break;
+                  }
 
-        // EventSource는 연결이 끊겼을 때 onerror를 여러 번 호출할 수 있음
-        // 첫 번째 에러만 로깅
-        if (errorLogged) return;
+                  if (data.done) {
+                    console.log("[useMockSSE] SSE stream done (done flag)");
+                    logEvent("event", "sse", "스트림 완료", {});
+                    setIsStreaming(false);
+                    break;
+                  }
 
-        if (eventSource.readyState === EventSource.CLOSED) {
-          if (!errorLogged) {
-            errorLogged = true;
-            logEvent("event", "sse", "스트림 연결 종료", {
-              reason: "Connection closed",
-            });
-            setIsStreaming(false);
-            eventSource.close();
-          }
-        } else if (eventSource.readyState === EventSource.CONNECTING) {
-          // 연결 중 에러 - 서버 연결 실패 가능성
-          if (!errorLogged) {
-            errorLogged = true;
-            logEvent("event", "sse", "스트림 연결 실패 (404)", {
-              reason: `Failed to connect to ${eventSource.url}. Make sure mock-server is running on port 3001 and the endpoint /api/stream/chat exists.`,
-            });
-            setIsStreaming(false);
-            eventSource.close();
+                  if (data.chunk) {
+                    logEvent("event", "sse", `청크 수신: "${data.chunk}"`, {
+                      chunk: data.chunk,
+                      index: data.index,
+                      duplicate: data.duplicate || false,
+                    });
+                    setStreamingText((prev) => {
+                      const chunk = data.chunk!;
+                      if (data.duplicate && prev.includes(chunk)) {
+                        return prev;
+                      }
+                      return prev + chunk;
+                    });
+                  }
+                } catch (parseError) {
+                  console.error("Failed to parse SSE data:", parseError);
+                  logEvent("event", "sse", `파싱 에러: ${String(parseError)}`, {
+                    error: String(parseError),
+                  });
+                }
+              }
+            }
           }
         }
-      };
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === "AbortError") {
+          console.log("[useMockSSE] Stream aborted by user");
+          logEvent("event", "sse", "스트림 사용자 중단", {});
+          return;
+        }
+
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+
+        console.error("[useMockSSE] Stream error:", error);
+
+        logEvent("event", "network", "스트림 연결 실패", {
+          error: errorMessage,
+        });
+        setIsStreaming(false);
+        setNetworkErrorModalOpen(true);
+      }
     },
-    [setStreamingText, setIsStreaming, logEvent]
+    [setStreamingText, setIsStreaming, setNetworkErrorModalOpen, logEvent]
   );
 
   const stopStream = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     setIsStreaming(false);
   }, [setIsStreaming]);
