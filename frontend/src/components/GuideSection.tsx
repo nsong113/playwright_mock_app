@@ -3,6 +3,7 @@ import { robotStateAtom } from "@/store";
 import { LocationCard } from "./LocationCard";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { MockBridgeControl } from "./MockBridgeControl";
+import { useEventLogger } from "@/hooks/useEventLogger";
 
 const locations = [
   { id: "location-a", name: "Location A", icon: "📍" },
@@ -13,11 +14,13 @@ const locations = [
 
 export function GuideSection() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
+  const { logEvent } = useEventLogger();
 
   const handleLocationClick = (location: string) => {
     if (robotState === "MOVING") {
       return; // 이미 이동 중이면 무시
     }
+    logEvent("event", "bridge", `이동 시작: ${location}`, { location });
     setRobotState("MOVING");
     // 실제로는 Bridge를 통해 이동 명령을 보내고, 도착 이벤트를 기다림
     // 여기서는 시뮬레이션을 위해 3초 후 자동으로 도착 이벤트 트리거

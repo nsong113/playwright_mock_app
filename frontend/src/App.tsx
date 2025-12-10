@@ -4,11 +4,17 @@ import { GuideSection } from "./components/GuideSection";
 import { ErrorModal } from "./components/ErrorModal";
 import { MovingModal } from "./components/MovingModal";
 import { ArrivalModal } from "./components/ArrivalModal";
+import { EventLogPanel } from "./components/EventLogPanel";
+import { NetworkToggle } from "./components/NetworkToggle";
+import { ResetSeedControls } from "./components/ResetSeedControls";
 import { useMockBridge } from "./hooks/useMockBridge";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
 
 function AppContent() {
   // Bridge 이벤트 리스너 초기화
   useMockBridge();
+  // 네트워크 상태 관리
+  useNetworkStatus();
 
   return (
     <div className="flex h-screen w-screen flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -31,6 +37,15 @@ function AppContent() {
       <ErrorModal />
       <MovingModal />
       <ArrivalModal />
+
+      {/* 컨트롤 패널 (상단 우측) */}
+      <div className="fixed top-4 right-4 flex items-center gap-3 z-40">
+        <ResetSeedControls />
+        <NetworkToggle />
+      </div>
+
+      {/* 이벤트 로그 패널 */}
+      <EventLogPanel />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useRecoilState } from "recoil";
 import { streamingTextAtom, isStreamingAtom } from "@/store";
 import { SSEChunk } from "@/types";
 import { useCallback, useRef } from "react";
+import { useEventLogger } from "./useEventLogger";
 
 type SSEMode = "normal" | "delay" | "missing" | "duplicate" | "error";
 
@@ -9,6 +10,7 @@ export function useMockSSE() {
   const [streamingText, setStreamingText] = useRecoilState(streamingTextAtom);
   const [isStreaming, setIsStreaming] = useRecoilState(isStreamingAtom);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const { logEvent } = useEventLogger();
 
   const startStream = useCallback(
     (
@@ -23,6 +25,8 @@ export function useMockSSE() {
       setStreamingText("");
       setIsStreaming(true);
 
+      logEvent("event", "sse", `스트림 시작: ${mode} 모드`, { mode, message });
+
       const url = `/api/stream/chat?mode=${mode}&message=${encodeURIComponent(
         message
       )}`;
@@ -35,12 +39,16 @@ export function useMockSSE() {
 
           if (data.error) {
             console.error("SSE Error:", data.error);
+            logEvent("event", "sse", `스트림 에러: ${data.error}`, {
+              error: data.error,
+            });
             setIsStreaming(false);
             eventSource.close();
             return;
           }
 
           if (data.done) {
+            logEvent("event", "sse", "스트림 완료", {});
             setIsStreaming(false);
             eventSource.close();
             return;
@@ -63,11 +71,12 @@ export function useMockSSE() {
 
       eventSource.onerror = (error) => {
         console.error("SSE connection error:", error);
+        logEvent("event", "sse", "스트림 연결 에러", { error: String(error) });
         setIsStreaming(false);
         eventSource.close();
       };
     },
-    [setStreamingText, setIsStreaming]
+    [setStreamingText, setIsStreaming, logEvent]
   );
 
   const stopStream = useCallback(() => {
