@@ -6,6 +6,7 @@ import {
   isStandbyModeAtom,
   currentLocationAtom,
   errorAtom,
+  arrivalModalOpenAtom,
 } from "@/store";
 import { useCallback, useEffect } from "react";
 
@@ -30,6 +31,7 @@ export function useMockBridge() {
   const setIsStandbyMode = useRecoilState(isStandbyModeAtom)[1];
   const setCurrentLocation = useSetRecoilState(currentLocationAtom);
   const setError = useSetRecoilState(errorAtom);
+  const setArrivalModalOpen = useSetRecoilState(arrivalModalOpenAtom);
 
   // Bridge 이벤트 리스너 설정
   useEffect(() => {
@@ -37,6 +39,8 @@ export function useMockBridge() {
       console.log("[Mock Bridge] Arrival:", location);
       setCurrentLocation(location);
       setRobotState("IDLE");
+      // 도착 모달 열기
+      setArrivalModalOpen(true);
     };
 
     window.onBatteryUpdated = (level: string) => {
@@ -88,6 +92,7 @@ export function useMockBridge() {
     setIsStandbyMode,
     setCurrentLocation,
     setError,
+    setArrivalModalOpen,
   ]);
 
   // 수동으로 이벤트 트리거하는 함수들 (테스트/디버깅용)

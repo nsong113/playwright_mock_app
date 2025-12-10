@@ -16,20 +16,24 @@ export function MockBridgeControl() {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-3">Mock Bridge 이벤트</h2>
+      <h3 className="text-sm font-semibold mb-3 text-gray-600">
+        Mock Bridge 이벤트 (테스트용)
+      </h3>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* 도착 이벤트 */}
         <div>
-          <label className="block text-sm font-medium mb-1">도착 이벤트</label>
+          <label className="block text-xs font-medium mb-1 text-gray-500">
+            도착 이벤트
+          </label>
           <div className="flex gap-2 flex-wrap">
             {locations.map((location) => (
               <button
                 key={location}
                 onClick={() => triggerArrival(location)}
-                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
               >
-                {location} 도착
+                {location}
               </button>
             ))}
           </div>
@@ -37,15 +41,15 @@ export function MockBridgeControl() {
 
         {/* 배터리 업데이트 */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            배터리 업데이트
+          <label className="block text-xs font-medium mb-1 text-gray-500">
+            배터리
           </label>
           <div className="flex gap-2 flex-wrap">
             {[100, 75, 50, 25, 10].map((level) => (
               <button
                 key={level}
                 onClick={() => triggerBatteryUpdate(level)}
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
               >
                 {level}%
               </button>
@@ -53,60 +57,26 @@ export function MockBridgeControl() {
           </div>
         </div>
 
-        {/* 대기 모드 */}
-        <div>
-          <label className="block text-sm font-medium mb-1">대기 모드</label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => triggerStandbyMode(true)}
-              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-            >
-              대기 모드 ON
-            </button>
-            <button
-              onClick={() => triggerStandbyMode(false)}
-              className="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm"
-            >
-              대기 모드 OFF
-            </button>
-          </div>
+        {/* 대기 모드 & 에러 */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => triggerStandbyMode(!isStandbyMode)}
+            className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs"
+          >
+            대기모드 {isStandbyMode ? "OFF" : "ON"}
+          </button>
+          <button
+            onClick={() => triggerError("NETWORK_ERROR", "Connection failed")}
+            className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+          >
+            에러 발생
+          </button>
         </div>
 
-        {/* 에러 이벤트 */}
-        <div>
-          <label className="block text-sm font-medium mb-1">에러 이벤트</label>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() =>
-                triggerError("NETWORK_ERROR", "Network connection failed")
-              }
-              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-            >
-              네트워크 에러
-            </button>
-            <button
-              onClick={() =>
-                triggerError("MOTOR_ERROR", "Motor system malfunction")
-              }
-              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-            >
-              모터 에러
-            </button>
-          </div>
-        </div>
-
-        {/* 현재 상태 표시 */}
-        <div className="pt-2 border-t">
-          <p className="text-sm text-gray-600">
-            현재 위치:{" "}
-            <span className="font-semibold">{currentLocation || "없음"}</span>
-          </p>
-          <p className="text-sm text-gray-600">
-            대기 모드:{" "}
-            <span className="font-semibold">
-              {isStandbyMode ? "ON" : "OFF"}
-            </span>
-          </p>
+        {/* 현재 상태 */}
+        <div className="pt-2 border-t text-xs text-gray-500">
+          위치: {currentLocation || "없음"} | 대기모드:{" "}
+          {isStandbyMode ? "ON" : "OFF"}
         </div>
       </div>
     </div>

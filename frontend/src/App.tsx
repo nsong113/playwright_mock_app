@@ -1,11 +1,9 @@
 import { RecoilRoot } from "recoil";
-import { StateMachine } from "./components/StateMachine";
-import { BatteryIndicator } from "./components/BatteryIndicator";
-import { SSEViewer } from "./components/SSEViewer";
-import { MockBridgeControl } from "./components/MockBridgeControl";
-import { RobotControl } from "./components/RobotControl";
+import { VoiceSection } from "./components/VoiceSection";
+import { GuideSection } from "./components/GuideSection";
 import { ErrorModal } from "./components/ErrorModal";
 import { MovingModal } from "./components/MovingModal";
+import { ArrivalModal } from "./components/ArrivalModal";
 import { useMockBridge } from "./hooks/useMockBridge";
 
 function AppContent() {
@@ -13,31 +11,26 @@ function AppContent() {
   useMockBridge();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          QA Mock Portfolio - Robot Control System
-        </h1>
+    <div className="flex h-screen w-screen flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="flex w-full flex-1">
+        {/* 좌측 영역 - 608px */}
+        <div className="w-[608px] bg-gradient-to-b from-[#c0d3fe] via-[#ebe5ff] to-[#d7f5fb]">
+          <VoiceSection />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 좌측 컬럼 */}
-          <div className="space-y-6">
-            <StateMachine />
-            <BatteryIndicator />
-            <SSEViewer />
-          </div>
-
-          {/* 우측 컬럼 */}
-          <div className="space-y-6">
-            <RobotControl />
-            <MockBridgeControl />
-          </div>
+        {/* 우측 영역 - 1312px */}
+        <div
+          id="right-pane"
+          className="relative flex w-[1312px] flex-col bg-primary"
+        >
+          <GuideSection />
         </div>
       </div>
 
       {/* 모달들 */}
       <ErrorModal />
       <MovingModal />
+      <ArrivalModal />
     </div>
   );
 }

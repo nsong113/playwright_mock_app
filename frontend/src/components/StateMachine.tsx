@@ -23,7 +23,7 @@ export function StateMachine() {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h2 className="mb-3 text-lg font-semibold">로봇 상태</h2>
+      <h3 className="mb-3 text-lg font-semibold">로봇 상태</h3>
       <div className="flex gap-3 items-center">
         <div
           className={`w-4 h-4 rounded-full animate-pulse ${stateColors[robotState]}`}

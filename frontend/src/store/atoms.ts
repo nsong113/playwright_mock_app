@@ -48,3 +48,9 @@ export const errorAtom = atom<{ code: string; message: string } | null>({
   key: "errorAtom",
   default: null,
 });
+
+// 도착 모달 표시 여부
+export const arrivalModalOpenAtom = atom<boolean>({
+  key: "arrivalModalOpenAtom",
+  default: false,
+});

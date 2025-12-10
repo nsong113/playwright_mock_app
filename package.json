@@ -9,10 +9,12 @@
   "scripts": {
     "dev": "concurrently \"yarn dev:server\" \"yarn dev:frontend\"",
     "build": "yarn workspaces run build",
+    "lint": "yarn workspace qa-mock-portfolio-frontend lint",
     "dev:frontend": "yarn workspace qa-mock-portfolio-frontend dev",
     "dev:server": "yarn workspace qa-mock-portfolio-server dev",
     "build:frontend": "yarn workspace qa-mock-portfolio-frontend build",
-    "build:server": "yarn workspace qa-mock-portfolio-server build"
+    "build:server": "yarn workspace qa-mock-portfolio-server build",
+    "lint:frontend": "yarn workspace qa-mock-portfolio-frontend lint"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
