@@ -10,6 +10,7 @@ import {
   arrivalModalOpenAtom,
   lowBatteryModalOpenAtom,
   criticalBatteryModalOpenAtom,
+  movementTimeoutIdAtom,
 } from "@/store";
 import { useCallback, useEffect, useRef } from "react";
 import { useEventLogger } from "./useEventLogger";
@@ -41,6 +42,7 @@ export function useMockBridge() {
   const setCriticalBatteryModalOpen = useSetRecoilState(
     criticalBatteryModalOpenAtom
   );
+  const setMovementTimeoutId = useSetRecoilState(movementTimeoutIdAtom);
   const { logEvent } = useEventLogger();
 
   // 배터리 모달이 이미 표시되었는지 추적 (중복 방지)
@@ -61,6 +63,13 @@ export function useMockBridge() {
       logEvent("event", "bridge", `도착: ${location}`, { location });
       setCurrentLocation(location);
       setTargetLocation(null); // 목적지 초기화
+      // 도착 시 timeout 초기화
+      setMovementTimeoutId((timeoutId) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        return null;
+      });
 
       // Home Base에 도착하면 CHARGING 상태로 변경
       if (location === "Home Base") {
@@ -183,6 +192,7 @@ export function useMockBridge() {
     setArrivalModalOpen,
     setLowBatteryModalOpen,
     setCriticalBatteryModalOpen,
+    setMovementTimeoutId,
     robotState,
     logEvent,
   ]);

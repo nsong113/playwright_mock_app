@@ -4,6 +4,7 @@ import {
   batteryLevelAtom,
   batteryInsufficientModalOpenAtom,
   targetLocationAtom,
+  movementTimeoutIdAtom,
 } from "@/store";
 import { LocationCard } from "./LocationCard";
 import { BatteryIndicator } from "./BatteryIndicator";
@@ -25,6 +26,7 @@ export function GuideSection() {
     batteryInsufficientModalOpenAtom
   )[1];
   const setTargetLocation = useSetRecoilState(targetLocationAtom);
+  const setMovementTimeoutId = useSetRecoilState(movementTimeoutIdAtom);
   const { logEvent } = useEventLogger();
 
   const handleLocationClick = (location: string) => {
@@ -48,11 +50,13 @@ export function GuideSection() {
     setTargetLocation(location); // 이동 목적지 설정
     // 실제로는 Bridge를 통해 이동 명령을 보내고, 도착 이벤트를 기다림
     // 여기서는 시뮬레이션을 위해 3초 후 자동으로 도착 이벤트 트리거
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (window.onArrival) {
         window.onArrival(location);
       }
+      setMovementTimeoutId(null); // timeout 완료 후 초기화
     }, 3000);
+    setMovementTimeoutId(timeoutId); // timeout ID 저장
   };
 
   return (

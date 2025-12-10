@@ -96,3 +96,15 @@ export const batteryInsufficientModalOpenAtom = atom<boolean>({
   key: "batteryInsufficientModalOpenAtom",
   default: false,
 });
+
+// 비상 정지 상태 (비상 정지로 인한 STANDBY인지 구분)
+export const isEmergencyStoppedAtom = atom<boolean>({
+  key: "isEmergencyStoppedAtom",
+  default: false,
+});
+
+// 이동 타임아웃 ID (비상 정지 시 취소하기 위해)
+export const movementTimeoutIdAtom = atom<NodeJS.Timeout | null>({
+  key: "movementTimeoutIdAtom",
+  default: null,
+});

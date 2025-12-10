@@ -14,6 +14,8 @@ import {
   lowBatteryModalOpenAtom,
   criticalBatteryModalOpenAtom,
   batteryInsufficientModalOpenAtom,
+  isEmergencyStoppedAtom,
+  movementTimeoutIdAtom,
 } from "@/store";
 import { useEventLogger } from "./useEventLogger";
 import { useCallback } from "react";
@@ -60,6 +62,8 @@ export function useResetAndSeed() {
   const setBatteryInsufficientModalOpen = useSetRecoilState(
     batteryInsufficientModalOpenAtom
   );
+  const setIsEmergencyStopped = useSetRecoilState(isEmergencyStoppedAtom);
+  const setMovementTimeoutId = useSetRecoilState(movementTimeoutIdAtom);
   const { logEvent, clearLogs } = useEventLogger();
 
   const reset = useCallback(() => {
@@ -76,6 +80,14 @@ export function useResetAndSeed() {
     setLowBatteryModalOpen(false);
     setCriticalBatteryModalOpen(false);
     setBatteryInsufficientModalOpen(false);
+    setIsEmergencyStopped(false);
+    // 진행 중인 timeout 취소
+    setMovementTimeoutId((timeoutId) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      return null;
+    });
     clearLogs();
     setSeedConfig(null);
 
@@ -94,6 +106,8 @@ export function useResetAndSeed() {
     setLowBatteryModalOpen,
     setCriticalBatteryModalOpen,
     setBatteryInsufficientModalOpen,
+    setIsEmergencyStopped,
+    setMovementTimeoutId,
     clearLogs,
     setSeedConfig,
     logEvent,

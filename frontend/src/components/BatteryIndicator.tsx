@@ -24,18 +24,17 @@ export function BatteryIndicator() {
             className={`h-full ${getBatteryColor().replace(
               "text-",
               "bg-"
-            )} transition-all duration-300 relative`}
+            )} transition-all duration-300`}
             style={{ width: `${batteryLevel}%` }}
             data-battery={batteryLevel}
-          >
-            {/* Home Base에 있을 때 배터리 중간에 충전 아이콘 표시 */}
-            {isAtHomeBase && isChargingState && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <FaBoltLightning className="text-xs text-yellow-300" />
-              </div>
-            )}
-          </div>
+          />
         </div>
+        {/* Home Base에 있을 때 배터리 전체의 정 중앙에 충전 아이콘 표시 */}
+        {isAtHomeBase && isChargingState && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <FaBoltLightning className="text-xs text-yellow-300" />
+          </div>
+        )}
         <div className="absolute -right-1 top-1/2 w-1 h-3 bg-gray-700 rounded-r -translate-y-1/2" />
       </div>
       <span className={`text-lg font-semibold ${getBatteryColor()}`}>
