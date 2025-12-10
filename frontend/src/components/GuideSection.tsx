@@ -4,12 +4,13 @@ import { LocationCard } from "./LocationCard";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { MockBridgeControl } from "./MockBridgeControl";
 import { useEventLogger } from "@/hooks/useEventLogger";
+import { MdLocationOn, MdBusiness, MdFactory, MdHome } from "react-icons/md";
 
 const locations = [
-  { id: "location-a", name: "Location A", icon: "📍" },
-  { id: "location-b", name: "Location B", icon: "🏢" },
-  { id: "location-c", name: "Location C", icon: "🏭" },
-  { id: "home-base", name: "Home Base", icon: "🏠" },
+  { id: "home-base", name: "Home Base", icon: <MdHome /> },
+  { id: "location-a", name: "Location A", icon: <MdLocationOn /> },
+  { id: "location-b", name: "Location B", icon: <MdBusiness /> },
+  { id: "location-c", name: "Location C", icon: <MdFactory /> },
 ];
 
 export function GuideSection() {
@@ -32,15 +33,15 @@ export function GuideSection() {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-primary">
+    <div className="flex flex-col w-full h-full bg-primary">
       {/* 헤더 */}
-      <div className="mb-[50px] flex h-[6rem] w-full items-center justify-end gap-5 bg-primary px-6">
+      <div className="mt-[30px] flex h-[6rem] w-full items-center justify-end gap-5 bg-primary px-6">
         <BatteryIndicator />
       </div>
 
       {/* 메인 컨텐츠 */}
       <div className="flex-1 px-12 pb-12">
-        <div className="flex h-full w-full flex-col items-start">
+        <div className="flex flex-col items-start w-full h-full">
           {/* 위치 카드 그리드 */}
           <div className="flex justify-center w-full">
             <div className="grid grid-cols-4 gap-x-6 gap-y-6">

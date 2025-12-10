@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
+import { ReactElement } from "react";
 
 interface LocationCardProps {
   id: string;
   name: string;
-  icon?: string;
+  icon?: ReactElement;
   onClick: () => void;
   isDisabled?: boolean;
 }
@@ -19,23 +20,35 @@ export function LocationCard({
       onPointerUp={onClick}
       whileHover={isDisabled ? {} : { scale: 1.05 }}
       whileTap={isDisabled ? {} : { scale: 0.95 }}
-      className={`relative flex h-[260px] w-[260px] rounded-[1.25rem] p-4 flex-col items-start border text-sm font-medium text-white shadow-lg transition-all duration-200 ${
-        isDisabled
-          ? "cursor-default opacity-20 bg-gray-400"
-          : "cursor-pointer bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+      className={`relative flex h-[260px] w-[260px] p-4 flex-col items-start border text-sm font-medium text-white transition-all duration-200 ${
+        isDisabled ? "bg-gray-400 opacity-20 cursor-default" : "cursor-pointer"
       }`}
+      style={
+        !isDisabled
+          ? {
+              borderRadius: "20px",
+              background:
+                name === "Home Base"
+                  ? "linear-gradient(136deg, #00CDAD 2.49%, #07C8CE 96.9%)"
+                  : "var(--primary_color2, linear-gradient(135deg, #5899FD 0%, #2B7FFF 100%))",
+              boxShadow: "2px 2px 2px 0 rgba(7, 152, 255, 0.12)",
+            }
+          : {
+              borderRadius: "20px",
+            }
+      }
       data-location={name}
     >
       {icon && (
-        <div className="mb-3 h-20 w-20 flex items-center justify-center text-4xl">
+        <div className="flex justify-center items-center mb-3 w-20 h-20 text-5xl">
           {icon}
         </div>
       )}
-      <div className="whitespace-pre-line text-2xl font-bold leading-tight">
+      <div className="text-2xl font-bold leading-tight whitespace-pre-line">
         {name}
       </div>
       {!isDisabled && (
-        <div className="absolute bottom-5 flex h-11 w-54 items-center justify-between rounded-lg bg-white bg-opacity-[0.12] px-5 text-xl font-extralight text-[#E0EAFF] shadow-[1px_1px_2px_0_rgba(0,0,0,0.08)]">
+        <div className="absolute bottom-5 flex h-11 w-[14rem] items-center justify-between rounded-lg bg-white bg-opacity-[0.12] px-5 text-xl font-extralight text-[#E0EAFF] shadow-[1px_1px_2px_0_rgba(0,0,0,0.08)]">
           이동하기
           <span className="ml-2">→</span>
         </div>

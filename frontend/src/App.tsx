@@ -17,8 +17,8 @@ function AppContent() {
   useNetworkStatus();
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="flex w-full flex-1">
+    <div className="flex flex-col w-screen h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="flex flex-1 w-full">
         {/* 좌측 영역 - 608px */}
         <div className="w-[608px] bg-gradient-to-b from-[#c0d3fe] via-[#ebe5ff] to-[#d7f5fb]">
           <VoiceSection />
@@ -39,7 +39,7 @@ function AppContent() {
       <ArrivalModal />
 
       {/* 컨트롤 패널 (상단 우측) */}
-      <div className="fixed top-4 right-4 flex items-center gap-3 z-40">
+      <div className="flex fixed top-4 right-4 z-40 gap-3 items-center">
         <ResetSeedControls />
         <NetworkToggle />
       </div>

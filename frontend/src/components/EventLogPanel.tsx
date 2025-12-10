@@ -1,6 +1,8 @@
 import { useRecoilValue } from "recoil";
 import { eventLogsAtom } from "@/store";
 import { EventLog } from "@/types";
+import { useState } from "react";
+import { IoChevronDown, IoChevronUp } from "react-icons/io5";
 
 const categoryColors: Record<EventLog["category"], string> = {
   bridge: "bg-blue-100 text-blue-800 border-blue-300",
@@ -14,8 +16,53 @@ const typeIcons: Record<EventLog["type"], string> = {
   "state-change": "🔄",
 };
 
-export function EventLogPanel() {
-  const logs = useRecoilValue(eventLogsAtom);
+// 심각도에 따른 색상 결정
+function getSeverityColor(log: EventLog): string {
+  const message = log.message.toLowerCase();
+  const details = log.details || {};
+
+  // 에러: 빨간색
+  if (
+    message.includes("에러") ||
+    message.includes("error") ||
+    message.includes("실패") ||
+    message.includes("failed") ||
+    message.includes("offline") ||
+    message.includes("오프라인") ||
+    (log.category === "network" &&
+      (details.status === "offline" || message.includes("offline")))
+  ) {
+    return "bg-red-100 text-red-800 border-red-300";
+  }
+
+  // 배터리 레벨에 따른 색상
+  if (message.includes("배터리") && typeof details.level === "number") {
+    const level = details.level;
+    if (level < 10) {
+      return "bg-red-100 text-red-800 border-red-300"; // 10% 미만: 빨간색
+    } else if (level <= 25) {
+      return "bg-orange-100 text-orange-800 border-orange-300"; // 25% 이하: 주황색
+    }
+  }
+
+  // 경고: 주황색
+  if (
+    message.includes("경고") ||
+    message.includes("warning") ||
+    message.includes("slow") ||
+    message.includes("지연")
+  ) {
+    return "bg-orange-100 text-orange-800 border-orange-300";
+  }
+
+  // 기본 카테고리 색상
+  return categoryColors[log.category];
+}
+
+function LogItem({ log }: { log: EventLog }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasDetails = log.details && Object.keys(log.details).length > 0;
+  const severityColor = getSeverityColor(log);
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -28,8 +75,65 @@ export function EventLogPanel() {
     return `${timeString}.${ms}`;
   };
 
+  const formatJSON = (obj: Record<string, unknown>) => {
+    return JSON.stringify(obj, null, 2);
+  };
+
   return (
-    <div className="fixed bottom-4 right-4 w-96 max-h-80 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col z-50">
+    <div
+      className={`text-xs rounded border transition-all ${severityColor} ${
+        hasDetails ? "cursor-pointer hover:shadow-sm" : ""
+      }`}
+      onClick={() => hasDetails && setIsExpanded(!isExpanded)}
+    >
+      <div className="p-2">
+        <div className="flex items-start gap-2">
+          <span className="text-base flex-shrink-0">{typeIcons[log.type]}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="font-medium break-words">{log.message}</span>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {hasDetails && (
+                  <span className="text-xs">
+                    {isExpanded ? (
+                      <IoChevronUp className="inline" />
+                    ) : (
+                      <IoChevronDown className="inline" />
+                    )}
+                  </span>
+                )}
+                <span className="text-xs opacity-70">
+                  {formatTime(log.timestamp)}
+                </span>
+              </div>
+            </div>
+            {hasDetails && isExpanded && log.details && (
+              <div className="mt-2 pt-2 border-t border-current border-opacity-20">
+                <div className="text-xs font-semibold mb-1 opacity-80">
+                  페이로드:
+                </div>
+                <pre className="text-xs bg-black bg-opacity-10 rounded p-2 overflow-x-auto whitespace-pre-wrap break-words">
+                  {formatJSON(log.details)}
+                </pre>
+              </div>
+            )}
+            {hasDetails && !isExpanded && log.details && (
+              <div className="text-xs opacity-60 mt-1">
+                {Object.keys(log.details).length}개 필드 • 클릭하여 확장
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EventLogPanel() {
+  const logs = useRecoilValue(eventLogsAtom);
+
+  return (
+    <div className="fixed bottom-4 right-4 w-[500px] max-h-[600px] bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col z-50">
       {/* 헤더 */}
       <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between rounded-t-lg">
         <h3 className="text-sm font-semibold text-gray-700">이벤트 로그</h3>
@@ -37,7 +141,7 @@ export function EventLogPanel() {
       </div>
 
       {/* 로그 리스트 */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {logs.length === 0 ? (
           <div className="text-center text-gray-400 text-sm py-8">
             로그가 없습니다
@@ -46,33 +150,7 @@ export function EventLogPanel() {
           logs
             .slice()
             .reverse()
-            .map((log) => (
-              <div
-                key={log.id}
-                className={`text-xs p-2 rounded border ${
-                  categoryColors[log.category]
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <span className="text-base">{typeIcons[log.type]}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="font-medium truncate">
-                        {log.message}
-                      </span>
-                      <span className="text-xs opacity-70 flex-shrink-0">
-                        {formatTime(log.timestamp)}
-                      </span>
-                    </div>
-                    {log.details && Object.keys(log.details).length > 0 && (
-                      <div className="text-xs opacity-80 mt-1 truncate">
-                        {JSON.stringify(log.details)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
+            .map((log) => <LogItem key={log.id} log={log} />)
         )}
       </div>
     </div>

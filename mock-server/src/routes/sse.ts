@@ -18,10 +18,14 @@ function chunkText(text: string, chunkSize: number = 3): string[] {
 
 // GET /api/stream/chat?mode=normal|delay|missing|duplicate|error
 router.get("/chat", (req: Request, res: Response) => {
+  console.log("SSE /chat route hit");
+  console.log("Query params:", req.query);
   const mode = (req.query.mode as string) || "normal";
   const message =
     (req.query.message as string) ||
     "Hello! This is a streaming response from the mock server.";
+
+  console.log("Mode:", mode, "Message:", message);
 
   // SSE 헤더 설정
   res.setHeader("Content-Type", "text/event-stream");
