@@ -28,7 +28,7 @@ export function LocationCard({
           ? {
               borderRadius: "20px",
               background:
-                name === "Home Base"
+                name === "Charging Station"
                   ? "linear-gradient(136deg, #00CDAD 2.49%, #07C8CE 96.9%)"
                   : "var(--primary_color2, linear-gradient(135deg, #5899FD 0%, #2B7FFF 100%))",
               boxShadow: "2px 2px 2px 0 rgba(7, 152, 255, 0.12)",

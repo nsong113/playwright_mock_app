@@ -1,25 +1,26 @@
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   lowBatteryModalOpenAtom,
+  lowBatteryModalShownAtom,
   criticalBatteryModalOpenAtom,
   robotStateAtom,
-  currentLocationAtom,
   targetLocationAtom,
-  isChargingAtom,
+  movementTimeoutIdAtom,
 } from "@/store";
 import { useEventLogger } from "@/hooks/useEventLogger";
+import { MOVEMENT_DURATION_MS } from "@/utils/constants";
 
 export function BatteryWarningModal() {
   const [lowBatteryOpen, setLowBatteryOpen] = useRecoilState(
     lowBatteryModalOpenAtom
   );
+  const setLowBatteryModalShown = useSetRecoilState(lowBatteryModalShownAtom);
   const [criticalBatteryOpen, setCriticalBatteryOpen] = useRecoilState(
     criticalBatteryModalOpenAtom
   );
   const setRobotState = useSetRecoilState(robotStateAtom);
-  const setCurrentLocation = useSetRecoilState(currentLocationAtom);
   const setTargetLocation = useSetRecoilState(targetLocationAtom);
-  const setIsCharging = useSetRecoilState(isChargingAtom);
+  const setMovementTimeoutId = useSetRecoilState(movementTimeoutIdAtom);
   const { logEvent } = useEventLogger();
 
   // 25% 경고 모달
@@ -43,31 +44,22 @@ export function BatteryWarningModal() {
               <button
                 onClick={() => {
                   setLowBatteryOpen(false);
+                  // "예"를 선택하면 충전기로 이동하므로 플래그를 유지 (MOVING 상태가 되므로 모달이 다시 열리지 않음)
+                  setLowBatteryModalShown(true);
                   logEvent("event", "bridge", "충전기로 이동 시작", {
-                    action: "move_to_homebase",
+                    action: "move_to_charging_station",
                   });
-                  // Home Base로 이동 시작
+                  // Charging Station으로 이동 시작
                   setRobotState("MOVING");
-                  setTargetLocation("Home Base"); // 이동 목적지 설정
-                  setTimeout(() => {
-                    setCurrentLocation("Home Base");
-                    setTargetLocation(null); // 목적지 초기화
-                    setRobotState("CHARGING");
-                    setIsCharging(true);
-                    logEvent(
-                      "state-change",
-                      "system",
-                      "상태 변경: MOVING → CHARGING",
-                      {
-                        from: "MOVING",
-                        to: "CHARGING",
-                        location: "Home Base",
-                      }
-                    );
-                    logEvent("event", "bridge", "Home Base 도착 - 충전 시작", {
-                      location: "Home Base",
-                    });
-                  }, 3000);
+                  setTargetLocation("Charging Station"); // 이동 목적지 설정
+                  // 이동 시뮬레이션 - window.onArrival을 호출하여 useMockBridge의 로직 사용
+                  const timeoutId = setTimeout(() => {
+                    if (window.onArrival) {
+                      window.onArrival("Charging Station");
+                    }
+                    setMovementTimeoutId(null);
+                  }, MOVEMENT_DURATION_MS);
+                  setMovementTimeoutId(timeoutId);
                 }}
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
@@ -76,6 +68,8 @@ export function BatteryWarningModal() {
               <button
                 onClick={() => {
                   setLowBatteryOpen(false);
+                  // "아니요"를 선택하면 플래그를 리셋하여 배터리 레벨이 변경되면 다시 모달을 열 수 있도록 함
+                  setLowBatteryModalShown(false);
                   logEvent("event", "bridge", "충전기 이동 취소", {
                     action: "cancel",
                   });
@@ -117,28 +111,17 @@ export function BatteryWarningModal() {
                     action: "auto_move_to_homebase",
                   }
                 );
-                // 자동으로 Home Base로 이동
+                // 자동으로 Charging Station으로 이동
                 setRobotState("MOVING");
-                setTargetLocation("Home Base"); // 이동 목적지 설정
-                setTimeout(() => {
-                  setCurrentLocation("Home Base");
-                  setTargetLocation(null); // 목적지 초기화
-                  setRobotState("CHARGING");
-                  setIsCharging(true);
-                  logEvent(
-                    "state-change",
-                    "system",
-                    "상태 변경: MOVING → CHARGING",
-                    {
-                      from: "MOVING",
-                      to: "CHARGING",
-                      location: "Home Base",
-                    }
-                  );
-                  logEvent("event", "bridge", "Home Base 도착 - 충전 시작", {
-                    location: "Home Base",
-                  });
-                }, 3000);
+                setTargetLocation("Charging Station"); // 이동 목적지 설정
+                // 이동 시뮬레이션 - window.onArrival을 호출하여 useMockBridge의 로직 사용
+                const timeoutId = setTimeout(() => {
+                  if (window.onArrival) {
+                    window.onArrival("Charging Station");
+                  }
+                  setMovementTimeoutId(null);
+                }, MOVEMENT_DURATION_MS);
+                setMovementTimeoutId(timeoutId);
               }}
               className="w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
             >

@@ -73,6 +73,12 @@ export const lowBatteryModalOpenAtom = atom<boolean>({
   default: false,
 });
 
+// 배터리 경고 모달이 이미 표시되었는지 추적 (25% 모달용, "아니요" 클릭 시 리셋되어야 함)
+export const lowBatteryModalShownAtom = atom<boolean>({
+  key: "lowBatteryModalShownAtom",
+  default: false,
+});
+
 // 배터리 위험 모달 (10% 이하)
 export const criticalBatteryModalOpenAtom = atom<boolean>({
   key: "criticalBatteryModalOpenAtom",

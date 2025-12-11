@@ -8,7 +8,7 @@ export const API_ENDPOINTS = {
 
 // 위치 목록
 export const LOCATIONS = [
-  { id: "home-base", name: "Home Base" },
+  { id: "charging-station", name: "Charging Station" },
   { id: "location-a", name: "Location A" },
   { id: "location-b", name: "Location B" },
 ] as const;

@@ -3,6 +3,7 @@ import {
   streamingTextAtom,
   isStreamingAtom,
   networkErrorModalOpenAtom,
+  robotStateAtom,
 } from "@/store";
 import { SSEChunk, SSEMode } from "@/types";
 import { useCallback, useRef } from "react";
@@ -13,6 +14,7 @@ import { clearIntervalSafely } from "@/utils/timeout";
 export function useMockSSE() {
   const [streamingText, setStreamingText] = useRecoilState(streamingTextAtom);
   const [isStreaming, setIsStreaming] = useRecoilState(isStreamingAtom);
+  const setRobotState = useSetRecoilState(robotStateAtom);
   const abortControllerRef = useRef<AbortController | null>(null);
   const setNetworkErrorModalOpen = useSetRecoilState(networkErrorModalOpenAtom);
   const { logEvent } = useEventLogger();
@@ -39,6 +41,11 @@ export function useMockSSE() {
       setStreamingText("");
       setIsStreaming(true);
       setNetworkErrorModalOpen(false);
+      
+      // 정상 또는 지연 스트리밍 시작 시 robotState를 IDLE로 설정 (에러 발생 시에만 ERROR로 변경)
+      if (mode !== "error") {
+        setRobotState("IDLE");
+      }
 
       // 기존 interval 정리
       clearIntervalSafely(displayIntervalRef.current);
@@ -145,8 +152,14 @@ export function useMockSSE() {
 
                   if (data.error) {
                     console.error("[useMockSSE] SSE Error:", data.error);
+                    setRobotState("ERROR");
                     logEvent("event", "sse", `스트림 에러: ${data.error}`, {
                       error: data.error,
+                    });
+                    logEvent("state-change", "system", "상태 변경: IDLE → ERROR (스트리밍 에러)", {
+                      from: "IDLE",
+                      to: "ERROR",
+                      reason: "sse_error",
                     });
                     isReadingRef.current = false;
                     clearIntervalSafely(displayIntervalRef.current);
@@ -280,6 +293,16 @@ export function useMockSSE() {
 
         console.error("[useMockSSE] Stream error:", error);
 
+        // 스트리밍 연결 실패 시 ERROR 상태로 변경 (에러 모드가 아닐 때)
+        if (mode !== "error") {
+          setRobotState("ERROR");
+          logEvent("state-change", "system", "상태 변경: IDLE → ERROR (스트림 연결 실패)", {
+            from: "IDLE",
+            to: "ERROR",
+            reason: "stream_connection_failed",
+          });
+        }
+        
         logEvent("event", "network", "스트림 연결 실패", {
           error: errorMessage,
         });
@@ -290,7 +313,7 @@ export function useMockSSE() {
         setNetworkErrorModalOpen(true);
       }
     },
-    [setStreamingText, setIsStreaming, setNetworkErrorModalOpen, logEvent]
+    [setStreamingText, setIsStreaming, setRobotState, setNetworkErrorModalOpen, logEvent]
   );
 
   const stopStream = useCallback(() => {

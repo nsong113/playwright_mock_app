@@ -1,10 +1,17 @@
-import { useRecoilState } from "recoil";
-import { errorAtom } from "@/store";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { errorAtom, robotStateAtom } from "@/store";
 
 export function ErrorModal() {
   const [error, setError] = useRecoilState(errorAtom);
+  const setRobotState = useSetRecoilState(robotStateAtom);
 
   if (!error) return null;
+
+  const handleClose = () => {
+    setError(null);
+    // 에러 모달을 닫을 때 robotState를 IDLE로 변경
+    setRobotState("IDLE");
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -22,14 +29,14 @@ export function ErrorModal() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setError(null)}
+            onClick={handleClose}
             className="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
             닫기
           </button>
           <button
             onClick={() => {
-              setError(null);
+              handleClose();
               // 재시도 로직 (필요시)
               window.location.reload();
             }}

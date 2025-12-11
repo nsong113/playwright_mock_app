@@ -1,21 +1,64 @@
-import { useRecoilState } from "recoil";
-import { networkStatusAtom } from "@/store";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { networkStatusAtom, robotStateAtom } from "@/store";
 import { NetworkStatus } from "@/types";
 import { useEffect, useRef } from "react";
 import { useEventLogger } from "./useEventLogger";
 
 export function useNetworkStatus() {
   const [networkStatus, setNetworkStatus] = useRecoilState(networkStatusAtom);
+  const robotState = useRecoilValue(robotStateAtom);
+  const setRobotState = useSetRecoilState(robotStateAtom);
   // 원본 fetch를 항상 유지 (한 번만 저장)
   const originalFetch = useRef<typeof fetch | null>(null);
   const isOverridden = useRef(false);
   const { logEvent } = useEventLogger();
+  // 이전 상태를 추적하여 중복 로그 방지
+  const prevNetworkStatus = useRef<NetworkStatus>(networkStatus);
+  const prevRobotState = useRef(robotState);
 
   const updateNetworkStatus = (status: NetworkStatus) => {
-    setNetworkStatus(status);
+    const currentRobotState = prevRobotState.current;
+
+    // 네트워크 상태 변경 이벤트 로그
     logEvent("event", "network", `네트워크 상태 변경: ${status}`, { status });
+
+    // networkStatus 변경에 따른 robotState 변경 처리
+    if (status === "offline" && currentRobotState !== "ERROR") {
+      setRobotState("ERROR");
+      logEvent(
+        "state-change",
+        "system",
+        `상태 변경: ${currentRobotState} → ERROR (네트워크 오프라인)`,
+        {
+          from: currentRobotState,
+          to: "ERROR",
+          reason: "network_offline",
+        }
+      );
+      prevRobotState.current = "ERROR";
+    } else if (
+      (status === "slow" || status === "online") &&
+      currentRobotState === "ERROR"
+    ) {
+      setRobotState("IDLE");
+      logEvent(
+        "state-change",
+        "system",
+        "상태 변경: ERROR → IDLE (네트워크 복구)",
+        {
+          from: "ERROR",
+          to: "IDLE",
+          reason: "network_recovered",
+        }
+      );
+      prevRobotState.current = "IDLE";
+    }
+
+    prevNetworkStatus.current = status;
+    setNetworkStatus(status);
   };
 
+  // networkStatus 변경에 따른 fetch override
   useEffect(() => {
     // 최초 한 번만 원본 fetch 저장
     if (originalFetch.current === null) {
@@ -56,6 +99,11 @@ export function useNetworkStatus() {
       }
     };
   }, [networkStatus]);
+
+  // robotState가 외부에서 변경되었을 때 prevRobotState 업데이트 (별도 useEffect)
+  useEffect(() => {
+    prevRobotState.current = robotState;
+  }, [robotState]);
 
   return {
     networkStatus,

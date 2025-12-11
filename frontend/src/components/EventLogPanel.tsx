@@ -21,6 +21,26 @@ function getSeverityColor(log: EventLog): string {
   const message = log.message.toLowerCase();
   const details = log.details || {};
 
+  // 상태 변경: IDLE로 변경되면 초록색
+  if (log.type === "state-change" && details.to === "IDLE") {
+    return "bg-green-100 text-green-800 border-green-300";
+  }
+
+  // 네트워크 상태: online은 초록색, offline은 빨간색, slow는 주황색
+  if (log.category === "network" && message.includes("네트워크 상태 변경")) {
+    if (details.status === "online" || message.includes("online")) {
+      return "bg-green-100 text-green-800 border-green-300";
+    } else if (
+      details.status === "offline" ||
+      message.includes("offline") ||
+      message.includes("오프라인")
+    ) {
+      return "bg-red-100 text-red-800 border-red-300";
+    } else if (details.status === "slow" || message.includes("slow")) {
+      return "bg-orange-100 text-orange-800 border-orange-300";
+    }
+  }
+
   // 에러: 빨간색
   if (
     message.includes("에러") ||
@@ -28,9 +48,7 @@ function getSeverityColor(log: EventLog): string {
     message.includes("실패") ||
     message.includes("failed") ||
     message.includes("offline") ||
-    message.includes("오프라인") ||
-    (log.category === "network" &&
-      (details.status === "offline" || message.includes("offline")))
+    message.includes("오프라인")
   ) {
     return "bg-red-100 text-red-800 border-red-300";
   }

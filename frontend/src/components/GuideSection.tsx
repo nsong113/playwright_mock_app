@@ -15,7 +15,7 @@ import { LOCATIONS, MOVEMENT_DURATION_MS } from "@/utils/constants";
 import { MdLocationOn, MdBusiness, MdHome } from "react-icons/md";
 
 const locationIcons: Record<string, JSX.Element> = {
-  "home-base": <MdHome />,
+  "charging-station": <MdHome />,
   "location-a": <MdLocationOn />,
   "location-b": <MdBusiness />,
 };
