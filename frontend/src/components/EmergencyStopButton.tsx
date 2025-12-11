@@ -1,17 +1,10 @@
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import {
-  robotStateAtom,
-  isEmergencyStoppedAtom,
-  targetLocationAtom,
-} from "@/store";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { robotStateAtom, isEmergencyStoppedAtom } from "@/store";
 import { useEventLogger } from "@/hooks/useEventLogger";
 
 export function EmergencyStopButton() {
   const robotState = useRecoilValue(robotStateAtom);
-  const [isEmergencyStopped, setIsEmergencyStopped] = useRecoilState(
-    isEmergencyStoppedAtom
-  );
-  const setTargetLocation = useSetRecoilState(targetLocationAtom);
+  const setIsEmergencyStopped = useSetRecoilState(isEmergencyStoppedAtom);
   const setRobotState = useSetRecoilState(robotStateAtom);
   const { logEvent } = useEventLogger();
 
@@ -20,20 +13,15 @@ export function EmergencyStopButton() {
 
   const handleEmergencyStop = () => {
     setIsEmergencyStopped(true);
-    setRobotState("STANDBY");
+    setRobotState("IDLE");
     logEvent("event", "system", "비상 정지 활성화", {
       action: "emergency_stop",
     });
-    logEvent(
-      "state-change",
-      "system",
-      "상태 변경: MOVING → STANDBY (비상 정지)",
-      {
-        from: "MOVING",
-        to: "STANDBY",
-        reason: "emergency_stop",
-      }
-    );
+    logEvent("state-change", "system", "상태 변경: MOVING → IDLE (비상 정지)", {
+      from: "MOVING",
+      to: "IDLE",
+      reason: "emergency_stop",
+    });
   };
 
   return (

@@ -90,8 +90,8 @@ router.post("/", async (req: Request, res: Response) => {
     body: req.body,
   });
 
-  // 40% 확률로 500 에러 반환
-  const shouldFail = Math.random() < 0.4;
+  //20% 확률로 500 에러 반환
+  const shouldFail = Math.random() < 0.25;
 
   if (shouldFail) {
     console.log("[Suggestions API POST] Returning 500 error (40% probability)");

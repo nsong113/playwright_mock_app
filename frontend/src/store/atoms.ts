@@ -25,12 +25,6 @@ export const isChargingAtom = atom<boolean>({
   default: false,
 });
 
-// 대기 모드 여부
-export const isStandbyModeAtom = atom<boolean>({
-  key: "isStandbyModeAtom",
-  default: false,
-});
-
 // 현재 위치
 export const currentLocationAtom = atom<string | null>({
   key: "currentLocationAtom",
@@ -128,5 +122,19 @@ export const suggestionsAtom = atom<Suggestion[]>({
 // 네트워크 에러 모달 표시 여부
 export const networkErrorModalOpenAtom = atom<boolean>({
   key: "networkErrorModalOpenAtom",
+  default: false,
+});
+
+// 선택된 스트리밍 모드
+export const selectedModeAtom = atom<
+  "normal" | "delay" | "missing" | "duplicate" | "error"
+>({
+  key: "selectedModeAtom",
+  default: "normal",
+});
+
+// Help 모달 열림 상태
+export const helpModalOpenAtom = atom<boolean>({
+  key: "helpModalOpenAtom",
   default: false,
 });

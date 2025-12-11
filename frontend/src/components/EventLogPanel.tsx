@@ -135,9 +135,17 @@ export function EventLogPanel() {
   return (
     <div className="fixed bottom-4 right-4 w-[500px] max-h-[600px] bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col z-50">
       {/* 헤더 */}
-      <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between rounded-t-lg">
-        <h3 className="text-sm font-semibold text-gray-700">이벤트 로그</h3>
-        <span className="text-xs text-gray-500">{logs.length}개</span>
+      <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-semibold text-gray-800">
+            ④ 로봇 이벤트 로그 (테스트 결과)
+          </h3>
+          <span className="text-xs text-gray-500">{logs.length}개</span>
+        </div>
+        <p className="text-xs text-gray-600">
+          위에서 발생시킨 이동·Bridge·SSE 이벤트가 시간순으로 기록됩니다.
+          Playwright 자동화에서 검증 대상이 되는 로그입니다.
+        </p>
       </div>
 
       {/* 로그 리스트 */}

@@ -3,7 +3,6 @@ import {
   robotStateAtom,
   batteryLevelAtom,
   isChargingAtom,
-  isStandbyModeAtom,
   currentLocationAtom,
   targetLocationAtom,
   streamingTextAtom,
@@ -48,7 +47,6 @@ export function useResetAndSeed() {
   const setRobotState = useSetRecoilState(robotStateAtom);
   const setBatteryLevel = useSetRecoilState(batteryLevelAtom);
   const setIsCharging = useSetRecoilState(isChargingAtom);
-  const setIsStandbyMode = useSetRecoilState(isStandbyModeAtom);
   const setCurrentLocation = useSetRecoilState(currentLocationAtom);
   const setTargetLocation = useSetRecoilState(targetLocationAtom);
   const setStreamingText = useSetRecoilState(streamingTextAtom);
@@ -72,7 +70,6 @@ export function useResetAndSeed() {
     setRobotState("IDLE");
     setBatteryLevel(100);
     setIsCharging(false);
-    setIsStandbyMode(false);
     setCurrentLocation(null);
     setTargetLocation(null);
     setStreamingText("");
@@ -99,7 +96,6 @@ export function useResetAndSeed() {
     setRobotState,
     setBatteryLevel,
     setIsCharging,
-    setIsStandbyMode,
     setCurrentLocation,
     setTargetLocation,
     setStreamingText,
@@ -130,7 +126,7 @@ export function useResetAndSeed() {
       });
 
       const random = new SeededRandom(seedValue);
-      const locations = ["Location A", "Location B", "Location C", "Home Base"];
+      const locations = ["Location A", "Location B", "Home Base"];
 
       // 시드 기반 결정:
       // 1. 이동할 위치
@@ -158,9 +154,6 @@ export function useResetAndSeed() {
         { code: "SENSOR_ERROR", message: "Sensor calibration failed" },
       ];
       const errorType = errorTypes[random.nextInt(0, errorTypes.length - 1)];
-
-      // 5. 대기 모드 활성화 여부 (10% 확률)
-      const willStandby = random.next() < 0.1;
 
       // 시나리오 실행
       let stepDelay = 500;
@@ -223,19 +216,6 @@ export function useResetAndSeed() {
             from: "MOVING",
             to: "IDLE",
           });
-
-          // Step 4: 대기 모드 (도착 후)
-          if (willStandby) {
-            setTimeout(() => {
-              setIsStandbyMode(true);
-              if (window.onStandbyModeUpdated) {
-                window.onStandbyModeUpdated(true);
-              }
-              logEvent("event", "bridge", "대기 모드 활성화", {
-                isStandby: true,
-              });
-            }, 1000);
-          }
         }
       }, stepDelay);
     },
@@ -245,7 +225,6 @@ export function useResetAndSeed() {
       setRobotState,
       setCurrentLocation,
       setBatteryLevel,
-      setIsStandbyMode,
       setError,
       logEvent,
     ]

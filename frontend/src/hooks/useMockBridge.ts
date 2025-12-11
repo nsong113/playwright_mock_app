@@ -3,7 +3,6 @@ import {
   robotStateAtom,
   batteryLevelAtom,
   isChargingAtom,
-  isStandbyModeAtom,
   currentLocationAtom,
   targetLocationAtom,
   errorAtom,
@@ -24,7 +23,6 @@ declare global {
     ) => void;
     onBatteryUpdated?: (level: string) => void;
     onBatteryStatusChanged?: (isCharging: boolean, battery: number) => void;
-    onStandbyModeUpdated?: (isStandby: boolean) => void;
     onError?: (code: string, message: string) => void;
   }
 }
@@ -33,7 +31,6 @@ export function useMockBridge() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
   const [batteryLevel, setBatteryLevel] = useRecoilState(batteryLevelAtom);
   const setIsCharging = useSetRecoilState(isChargingAtom);
-  const setIsStandbyMode = useRecoilState(isStandbyModeAtom)[1];
   const setCurrentLocation = useSetRecoilState(currentLocationAtom);
   const setTargetLocation = useSetRecoilState(targetLocationAtom);
   const setError = useSetRecoilState(errorAtom);
@@ -48,13 +45,6 @@ export function useMockBridge() {
   // 배터리 모달이 이미 표시되었는지 추적 (중복 방지)
   const lowBatteryModalShown = useRef(false);
   const criticalBatteryModalShown = useRef(false);
-
-  // 상태 변경 추적
-  useEffect(() => {
-    logEvent("state-change", "system", `상태: ${robotState}`, {
-      state: robotState,
-    });
-  }, [robotState, logEvent]);
 
   // Bridge 이벤트 리스너 설정
   useEffect(() => {
@@ -149,20 +139,6 @@ export function useMockBridge() {
       }
     };
 
-    window.onStandbyModeUpdated = (isStandby: boolean) => {
-      console.log("[Mock Bridge] Standby mode updated:", isStandby);
-      logEvent(
-        "event",
-        "bridge",
-        `대기 모드: ${isStandby ? "활성화" : "비활성화"}`,
-        { isStandby }
-      );
-      setIsStandbyMode(isStandby);
-      if (isStandby) {
-        setRobotState("STANDBY");
-      }
-    };
-
     window.onError = (code: string, message: string) => {
       console.error("[Mock Bridge] Error:", { code, message });
       logEvent("event", "bridge", `에러: ${code} - ${message}`, {
@@ -178,14 +154,12 @@ export function useMockBridge() {
       window.onArrival = undefined;
       window.onBatteryUpdated = undefined;
       window.onBatteryStatusChanged = undefined;
-      window.onStandbyModeUpdated = undefined;
       window.onError = undefined;
     };
   }, [
     setRobotState,
     setBatteryLevel,
     setIsCharging,
-    setIsStandbyMode,
     setCurrentLocation,
     setTargetLocation,
     setError,
@@ -249,12 +223,6 @@ export function useMockBridge() {
     }
   }, []);
 
-  const triggerStandbyMode = useCallback((isStandby: boolean) => {
-    if (window.onStandbyModeUpdated) {
-      window.onStandbyModeUpdated(isStandby);
-    }
-  }, []);
-
   const triggerError = useCallback((code: string, message: string) => {
     if (window.onError) {
       window.onError(code, message);
@@ -264,7 +232,6 @@ export function useMockBridge() {
   return {
     triggerArrival,
     triggerBatteryUpdate,
-    triggerStandbyMode,
     triggerError,
   };
 }

@@ -6,7 +6,9 @@ import { useEventLogger } from "./useEventLogger";
 
 export function useNetworkStatus() {
   const [networkStatus, setNetworkStatus] = useRecoilState(networkStatusAtom);
+  // 원본 fetch를 항상 유지 (한 번만 저장)
   const originalFetch = useRef<typeof fetch | null>(null);
+  const isOverridden = useRef(false);
   const { logEvent } = useEventLogger();
 
   const updateNetworkStatus = (status: NetworkStatus) => {
@@ -15,30 +17,42 @@ export function useNetworkStatus() {
   };
 
   useEffect(() => {
+    // 최초 한 번만 원본 fetch 저장
+    if (originalFetch.current === null) {
+      originalFetch.current = window.fetch.bind(window);
+    }
+
+    // 기존 override 제거
+    if (isOverridden.current && originalFetch.current !== null) {
+      window.fetch = originalFetch.current;
+      isOverridden.current = false;
+    }
+
     if (networkStatus === "offline") {
       // Fetch를 오버라이드하여 모든 요청 실패 시뮬레이션
-      originalFetch.current = window.fetch;
-      window.fetch = () => {
-        return Promise.reject(new Error("Network offline"));
-      };
+      if (originalFetch.current !== null) {
+        window.fetch = () => {
+          return Promise.reject(new Error("Network offline"));
+        };
+        isOverridden.current = true;
+      }
     } else if (networkStatus === "slow") {
       // Fetch를 오버라이드하여 지연 추가
-      originalFetch.current = window.fetch;
-      window.fetch = async (...args) => {
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 지연
-        return originalFetch.current!(...args);
-      };
-    } else {
-      // 원래 fetch 복원
-      if (originalFetch.current) {
-        window.fetch = originalFetch.current;
-        originalFetch.current = null;
+      if (originalFetch.current !== null) {
+        const original = originalFetch.current;
+        window.fetch = async (...args) => {
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 지연
+          return original(...args);
+        };
+        isOverridden.current = true;
       }
     }
 
     return () => {
-      if (originalFetch.current && window.fetch !== originalFetch.current) {
+      // cleanup: 원본 fetch 복원
+      if (isOverridden.current && originalFetch.current !== null) {
         window.fetch = originalFetch.current;
+        isOverridden.current = false;
       }
     };
   }, [networkStatus]);

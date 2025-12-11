@@ -1,7 +1,7 @@
 import { useRecoilState } from "recoil";
 import { robotStateAtom } from "@/store";
 
-const locations = ["Location A", "Location B", "Location C", "Home Base"];
+const locations = ["Location A", "Location B", "Home Base"];
 
 export function RobotControl() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
@@ -22,16 +22,16 @@ export function RobotControl() {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-3">로봇 이동 제어</h2>
+      <h2 className="mb-3 text-lg font-semibold">로봇 이동 제어</h2>
 
       <div className="space-y-3">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           {locations.map((location) => (
             <button
               key={location}
               onClick={() => handleMove(location)}
               disabled={robotState === "MOVING"}
-              className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-white bg-indigo-500 rounded hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
               data-action="move"
               data-location={location}
             >
@@ -41,7 +41,7 @@ export function RobotControl() {
         </div>
 
         {robotState === "MOVING" && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+          <div className="p-3 bg-blue-50 rounded border border-blue-200">
             <p className="text-sm text-blue-800">
               이동 중입니다... 잠시만 기다려주세요.
             </p>

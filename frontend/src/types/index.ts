@@ -1,13 +1,12 @@
 // 로봇 상태 타입
-export type RobotState = "IDLE" | "MOVING" | "STANDBY" | "ERROR" | "CHARGING";
+export type RobotState = "IDLE" | "MOVING" | "ERROR" | "CHARGING";
 
 // Bridge 이벤트 타입
 export interface BridgeEvent {
-  type: "arrival" | "battery" | "standby" | "error";
+  type: "arrival" | "battery" | "error";
   data:
     | { location: string; position?: { x: number; y: number; yaw: number } }
     | { level: string | number }
-    | { isStandby: boolean }
     | { code: string; message: string };
 }
 

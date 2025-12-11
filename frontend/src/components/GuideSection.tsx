@@ -9,14 +9,15 @@ import {
 import { LocationCard } from "./LocationCard";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { MockBridgeControl } from "./MockBridgeControl";
+import { NetworkToggle } from "./NetworkToggle";
 import { useEventLogger } from "@/hooks/useEventLogger";
-import { MdLocationOn, MdBusiness, MdFactory, MdHome } from "react-icons/md";
+import { MdLocationOn, MdBusiness, MdHome } from "react-icons/md";
 
 const locations = [
   { id: "home-base", name: "Home Base", icon: <MdHome /> },
   { id: "location-a", name: "Location A", icon: <MdLocationOn /> },
   { id: "location-b", name: "Location B", icon: <MdBusiness /> },
-  { id: "location-c", name: "Location C", icon: <MdFactory /> },
+  // { id: "location-c", name: "Location C", icon: <MdFactory /> },
 ];
 
 export function GuideSection() {
@@ -62,15 +63,27 @@ export function GuideSection() {
   return (
     <div className="flex flex-col w-full h-full bg-primary">
       {/* 헤더 */}
-      <div className="mt-[30px] flex h-[6rem] w-full items-center justify-end gap-5 bg-primary px-6">
+      <div className=" flex h-[4rem] w-full items-center justify-end gap-5 bg-primary px-6">
         <BatteryIndicator />
+        <NetworkToggle />
       </div>
 
       {/* 메인 컨텐츠 */}
       <div className="flex-1 px-12 pb-12">
         <div className="flex flex-col items-start w-full h-full">
+          {/* 위치 이동 시뮬레이션 섹션 */}
+          <div className="mb-4 w-full">
+            <h2 className="mb-1 text-lg font-semibold text-gray-800">
+              ① 로봇 위치 이동 시뮬레이션
+            </h2>
+            <p className="text-sm text-gray-600">
+              각 위치 버튼을 눌러 로봇 이동을 시뮬레이션하고, 상태·이벤트 로그가
+              제대로 갱신되는지 테스트합니다.
+            </p>
+          </div>
+
           {/* 위치 카드 그리드 */}
-          <div className="flex justify-center w-full">
+          <div className="flex justify-start w-full">
             <div className="grid grid-cols-4 gap-x-6 gap-y-6">
               {locations.map((location) => (
                 <LocationCard
@@ -86,7 +99,7 @@ export function GuideSection() {
           </div>
 
           {/* Mock Bridge Control (하단에 작게) */}
-          <div className="mt-8 w-full">
+          <div className="mt-8 w-full pr-[540px]">
             <MockBridgeControl />
           </div>
         </div>

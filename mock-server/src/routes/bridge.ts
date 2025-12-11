@@ -20,13 +20,6 @@ router.post("/battery", (req: Request, res: Response) => {
   res.json({ success: true, event: "battery", level });
 });
 
-// POST /api/bridge/standby
-router.post("/standby", (req: Request, res: Response) => {
-  const { isStandby } = req.body;
-  console.log("[Bridge Mock] Standby mode updated:", isStandby);
-  res.json({ success: true, event: "standby", isStandby });
-});
-
 // POST /api/bridge/error
 router.post("/error", (req: Request, res: Response) => {
   const { code, message } = req.body;

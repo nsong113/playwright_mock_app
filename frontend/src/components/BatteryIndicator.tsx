@@ -19,7 +19,7 @@ export function BatteryIndicator() {
   return (
     <div className="flex gap-2 items-center">
       <div className="relative">
-        <div className="w-12 h-6 rounded-sm border-2 border-gray-700">
+        <div className="w-10 h-5 rounded-sm border-2 border-gray-700">
           <div
             className={`h-full ${getBatteryColor().replace(
               "text-",
@@ -40,9 +40,6 @@ export function BatteryIndicator() {
       <span className={`text-lg font-semibold ${getBatteryColor()}`}>
         {batteryLevel}%
       </span>
-      {isChargingState && (
-        <span className="text-sm font-semibold text-purple-600">⚡</span>
-      )}
     </div>
   );
 }

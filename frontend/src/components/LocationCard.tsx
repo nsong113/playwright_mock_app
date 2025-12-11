@@ -20,7 +20,7 @@ export function LocationCard({
       onPointerUp={onClick}
       whileHover={isDisabled ? {} : { scale: 1.05 }}
       whileTap={isDisabled ? {} : { scale: 0.95 }}
-      className={`relative flex h-[260px] w-[260px] p-4 flex-col items-start border text-sm font-medium text-white transition-all duration-200 ${
+      className={`relative flex h-[208px] w-[208px] p-4 flex-col items-start border text-sm font-medium text-white transition-all duration-200 ${
         isDisabled ? "bg-gray-400 opacity-20 cursor-default" : "cursor-pointer"
       }`}
       style={
@@ -40,15 +40,15 @@ export function LocationCard({
       data-location={name}
     >
       {icon && (
-        <div className="flex justify-center items-center mb-3 w-20 h-20 text-5xl">
+        <div className="flex justify-center items-center mb-2 w-16 h-16 text-4xl">
           {icon}
         </div>
       )}
-      <div className="text-2xl font-bold leading-tight whitespace-pre-line">
+      <div className="text-xl font-bold leading-tight whitespace-pre-line">
         {name}
       </div>
       {!isDisabled && (
-        <div className="absolute bottom-5 flex h-11 w-[14rem] items-center justify-between rounded-lg bg-white bg-opacity-[0.12] px-5 text-xl font-extralight text-[#E0EAFF] shadow-[1px_1px_2px_0_rgba(0,0,0,0.08)]">
+        <div className="absolute bottom-4 flex h-9 w-[11rem] items-center justify-between rounded-lg bg-white bg-opacity-[0.12] px-4 text-lg font-extralight text-[#E0EAFF] shadow-[1px_1px_2px_0_rgba(0,0,0,0.08)]">
           이동하기
           <span className="ml-2">→</span>
         </div>

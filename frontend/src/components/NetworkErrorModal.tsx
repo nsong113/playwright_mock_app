@@ -1,4 +1,4 @@
-import { useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { networkErrorModalOpenAtom } from "@/store";
 
 interface NetworkErrorModalProps {
@@ -6,7 +6,7 @@ interface NetworkErrorModalProps {
 }
 
 export function NetworkErrorModal({ onRetry }: NetworkErrorModalProps) {
-  const [isOpen, setIsOpen] = useRecoilState(networkErrorModalOpenAtom);
+  const isOpen = useRecoilValue(networkErrorModalOpenAtom);
 
   if (!isOpen) return null;
 

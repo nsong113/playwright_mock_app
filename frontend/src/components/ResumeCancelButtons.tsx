@@ -18,8 +18,16 @@ export function ResumeCancelButtons() {
   const { logEvent } = useEventLogger();
   const arrivalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 비상 정지로 인한 STANDBY 상태일 때만 표시
-  if (robotState !== "STANDBY" || !isEmergencyStopped) return null;
+  useEffect(() => {
+    return () => {
+      if (arrivalTimeoutRef.current) {
+        clearTimeout(arrivalTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 비상 정지로 인한 IDLE 상태일 때만 표시
+  if (robotState !== "IDLE" || !isEmergencyStopped) return null;
 
   const handleResume = () => {
     if (!targetLocation) return;
@@ -30,8 +38,8 @@ export function ResumeCancelButtons() {
       action: "resume",
       targetLocation,
     });
-    logEvent("state-change", "system", "상태 변경: STANDBY → MOVING (재개)", {
-      from: "STANDBY",
+    logEvent("state-change", "system", "상태 변경: IDLE → MOVING (재개)", {
+      from: "IDLE",
       to: "MOVING",
       targetLocation,
     });
@@ -51,19 +59,10 @@ export function ResumeCancelButtons() {
     logEvent("event", "system", "이동 취소", {
       action: "cancel",
     });
-    logEvent("state-change", "system", "상태 변경: STANDBY → IDLE (취소)", {
-      from: "STANDBY",
-      to: "IDLE",
+    logEvent("event", "system", "이동 취소 완료", {
+      action: "cancel",
     });
   };
-
-  useEffect(() => {
-    return () => {
-      if (arrivalTimeoutRef.current) {
-        clearTimeout(arrivalTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="flex gap-2">

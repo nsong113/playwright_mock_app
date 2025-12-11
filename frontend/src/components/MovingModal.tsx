@@ -31,15 +31,15 @@ export function MovingModal() {
     };
   }, []);
 
-  // MOVING 상태이거나 비상 정지로 인한 STANDBY 상태일 때 표시
+  // MOVING 상태이거나 비상 정지로 인한 IDLE 상태일 때 표시
   if (
     robotState !== "MOVING" &&
-    !(robotState === "STANDBY" && isEmergencyStopped)
+    !(robotState === "IDLE" && isEmergencyStopped)
   ) {
     return null;
   }
 
-  const isPaused = robotState === "STANDBY" && isEmergencyStopped;
+  const isPaused = robotState === "IDLE" && isEmergencyStopped;
 
   const handleEmergencyStop = () => {
     // 진행 중인 이동 timeout 취소
@@ -49,20 +49,15 @@ export function MovingModal() {
     }
 
     setIsEmergencyStopped(true);
-    setRobotState("STANDBY");
+    setRobotState("IDLE");
     logEvent("event", "system", "비상 정지 활성화", {
       action: "emergency_stop",
     });
-    logEvent(
-      "state-change",
-      "system",
-      "상태 변경: MOVING → STANDBY (비상 정지)",
-      {
-        from: "MOVING",
-        to: "STANDBY",
-        reason: "emergency_stop",
-      }
-    );
+    logEvent("state-change", "system", "상태 변경: MOVING → IDLE (비상 정지)", {
+      from: "MOVING",
+      to: "IDLE",
+      reason: "emergency_stop",
+    });
   };
 
   const handleResume = () => {
@@ -74,8 +69,8 @@ export function MovingModal() {
       action: "resume",
       targetLocation,
     });
-    logEvent("state-change", "system", "상태 변경: STANDBY → MOVING (재개)", {
-      from: "STANDBY",
+    logEvent("state-change", "system", "상태 변경: IDLE → MOVING (재개)", {
+      from: "IDLE",
       to: "MOVING",
       targetLocation,
     });
@@ -108,9 +103,8 @@ export function MovingModal() {
     logEvent("event", "system", "이동 취소", {
       action: "cancel",
     });
-    logEvent("state-change", "system", "상태 변경: STANDBY → IDLE (취소)", {
-      from: "STANDBY",
-      to: "IDLE",
+    logEvent("event", "system", "이동 취소 완료", {
+      action: "cancel",
     });
   };
 
