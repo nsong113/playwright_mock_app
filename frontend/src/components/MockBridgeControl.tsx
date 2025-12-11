@@ -3,6 +3,7 @@ import { useRecoilValue } from "recoil";
 import { batteryLevelAtom } from "@/store";
 import { useState, ChangeEvent, useEffect, useRef } from "react";
 import { useEventLogger } from "@/hooks/useEventLogger";
+import { LOCATIONS, BATTERY_LEVELS } from "@/utils/constants";
 
 export function MockBridgeControl() {
   const { triggerArrival, triggerBatteryUpdate, triggerError } =
@@ -11,8 +12,6 @@ export function MockBridgeControl() {
   const [inputValue, setInputValue] = useState(batteryLevel.toString());
   const inputRef = useRef<HTMLInputElement>(null);
   const { logEvent } = useEventLogger();
-
-  const locations = ["Home Base", "Location A", "Location B"];
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -65,13 +64,13 @@ export function MockBridgeControl() {
             도착 이벤트
           </label>
           <div className="flex flex-wrap gap-2">
-            {locations.map((location) => (
+            {LOCATIONS.map((location) => (
               <button
-                key={location}
-                onClick={() => triggerArrival(location)}
+                key={location.id}
+                onClick={() => triggerArrival(location.name)}
                 className="px-2 py-1 text-xs text-white bg-green-500 rounded hover:bg-green-600"
               >
-                {location}
+                {location.name}
               </button>
             ))}
           </div>
@@ -83,7 +82,7 @@ export function MockBridgeControl() {
             배터리 이벤트
           </label>
           <div className="flex flex-wrap gap-2 items-center">
-            {[100, 75, 50, 25, 10].map((level) => (
+            {BATTERY_LEVELS.map((level) => (
               <button
                 key={level}
                 onClick={() => triggerBatteryUpdate(level)}

@@ -7,6 +7,8 @@ import {
 } from "@/store";
 import { useEventLogger } from "@/hooks/useEventLogger";
 import { useEffect, useRef } from "react";
+import { MOVEMENT_DURATION_MS } from "@/utils/constants";
+import { clearTimeoutSafely } from "@/utils/timeout";
 
 export function MovingModal() {
   const robotState = useRecoilValue(robotStateAtom);
@@ -25,9 +27,7 @@ export function MovingModal() {
   // 모든 hooks를 먼저 호출한 후 조건부 렌더링
   useEffect(() => {
     return () => {
-      if (arrivalTimeoutRef.current) {
-        clearTimeout(arrivalTimeoutRef.current);
-      }
+      clearTimeoutSafely(arrivalTimeoutRef.current);
     };
   }, []);
 
@@ -43,10 +43,8 @@ export function MovingModal() {
 
   const handleEmergencyStop = () => {
     // 진행 중인 이동 timeout 취소
-    if (movementTimeoutId) {
-      clearTimeout(movementTimeoutId);
-      setMovementTimeoutId(null);
-    }
+    clearTimeoutSafely(movementTimeoutId);
+    setMovementTimeoutId(null);
 
     setIsEmergencyStopped(true);
     setRobotState("IDLE");
@@ -81,21 +79,17 @@ export function MovingModal() {
         window.onArrival(targetLocation);
       }
       setMovementTimeoutId(null); // timeout 완료 후 초기화
-    }, 3000);
+    }, MOVEMENT_DURATION_MS);
     setMovementTimeoutId(timeoutId); // timeout ID 저장
     arrivalTimeoutRef.current = timeoutId;
   };
 
   const handleCancel = () => {
     // 진행 중인 timeout 취소 (있다면)
-    if (movementTimeoutId) {
-      clearTimeout(movementTimeoutId);
-      setMovementTimeoutId(null);
-    }
-    if (arrivalTimeoutRef.current) {
-      clearTimeout(arrivalTimeoutRef.current);
-      arrivalTimeoutRef.current = null;
-    }
+    clearTimeoutSafely(movementTimeoutId);
+    setMovementTimeoutId(null);
+    clearTimeoutSafely(arrivalTimeoutRef.current);
+    arrivalTimeoutRef.current = null;
 
     setIsEmergencyStopped(false);
     setRobotState("IDLE");

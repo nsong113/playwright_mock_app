@@ -1,11 +1,5 @@
 import { atom } from "recoil";
-import {
-  RobotState,
-  EventLog,
-  NetworkStatus,
-  SeedConfig,
-  Suggestion,
-} from "@/types";
+import { RobotState, EventLog, NetworkStatus, Suggestion } from "@/types";
 
 // 로봇 상태
 export const robotStateAtom = atom<RobotState>({
@@ -73,12 +67,6 @@ export const networkStatusAtom = atom<NetworkStatus>({
   default: "online",
 });
 
-// 시드 설정
-export const seedConfigAtom = atom<SeedConfig | null>({
-  key: "seedConfigAtom",
-  default: null,
-});
-
 // 배터리 경고 모달 (25%)
 export const lowBatteryModalOpenAtom = atom<boolean>({
   key: "lowBatteryModalOpenAtom",
@@ -126,9 +114,7 @@ export const networkErrorModalOpenAtom = atom<boolean>({
 });
 
 // 선택된 스트리밍 모드
-export const selectedModeAtom = atom<
-  "normal" | "delay" | "missing" | "duplicate" | "error"
->({
+export const selectedModeAtom = atom<"normal" | "delay" | "error">({
   key: "selectedModeAtom",
   default: "normal",
 });

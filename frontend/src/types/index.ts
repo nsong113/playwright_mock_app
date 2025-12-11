@@ -1,6 +1,9 @@
 // 로봇 상태 타입
 export type RobotState = "IDLE" | "MOVING" | "ERROR" | "CHARGING";
 
+// SSE 모드 타입
+export type SSEMode = "normal" | "delay" | "error";
+
 // Bridge 이벤트 타입
 export interface BridgeEvent {
   type: "arrival" | "battery" | "error";
@@ -41,12 +44,6 @@ export type EventLogCategory = "bridge" | "sse" | "network" | "system";
 
 // 네트워크 상태 타입
 export type NetworkStatus = "online" | "offline" | "slow";
-
-// 시드 정보 타입
-export interface SeedConfig {
-  seed: string;
-  scenario: string;
-}
 
 // 추천 질문 타입
 export interface Suggestion {

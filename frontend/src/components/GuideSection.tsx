@@ -11,14 +11,14 @@ import { BatteryIndicator } from "./BatteryIndicator";
 import { MockBridgeControl } from "./MockBridgeControl";
 import { NetworkToggle } from "./NetworkToggle";
 import { useEventLogger } from "@/hooks/useEventLogger";
+import { LOCATIONS, MOVEMENT_DURATION_MS } from "@/utils/constants";
 import { MdLocationOn, MdBusiness, MdHome } from "react-icons/md";
 
-const locations = [
-  { id: "home-base", name: "Home Base", icon: <MdHome /> },
-  { id: "location-a", name: "Location A", icon: <MdLocationOn /> },
-  { id: "location-b", name: "Location B", icon: <MdBusiness /> },
-  // { id: "location-c", name: "Location C", icon: <MdFactory /> },
-];
+const locationIcons: Record<string, JSX.Element> = {
+  "home-base": <MdHome />,
+  "location-a": <MdLocationOn />,
+  "location-b": <MdBusiness />,
+};
 
 export function GuideSection() {
   const [robotState, setRobotState] = useRecoilState(robotStateAtom);
@@ -50,13 +50,13 @@ export function GuideSection() {
     setRobotState("MOVING");
     setTargetLocation(location); // 이동 목적지 설정
     // 실제로는 Bridge를 통해 이동 명령을 보내고, 도착 이벤트를 기다림
-    // 여기서는 시뮬레이션을 위해 3초 후 자동으로 도착 이벤트 트리거
+    // 여기서는 시뮬레이션을 위해 일정 시간 후 자동으로 도착 이벤트 트리거
     const timeoutId = setTimeout(() => {
       if (window.onArrival) {
         window.onArrival(location);
       }
       setMovementTimeoutId(null); // timeout 완료 후 초기화
-    }, 3000);
+    }, MOVEMENT_DURATION_MS);
     setMovementTimeoutId(timeoutId); // timeout ID 저장
   };
 
@@ -85,12 +85,12 @@ export function GuideSection() {
           {/* 위치 카드 그리드 */}
           <div className="flex justify-start w-full">
             <div className="grid grid-cols-4 gap-x-6 gap-y-6">
-              {locations.map((location) => (
+              {LOCATIONS.map((location) => (
                 <LocationCard
                   key={location.id}
                   id={location.id}
                   name={location.name}
-                  icon={location.icon}
+                  icon={locationIcons[location.id]}
                   onClick={() => handleLocationClick(location.name)}
                   isDisabled={robotState === "MOVING"}
                 />

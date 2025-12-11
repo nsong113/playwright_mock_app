@@ -4,11 +4,11 @@ import {
   isStreamingAtom,
   networkErrorModalOpenAtom,
 } from "@/store";
-import { SSEChunk } from "@/types";
+import { SSEChunk, SSEMode } from "@/types";
 import { useCallback, useRef } from "react";
 import { useEventLogger } from "./useEventLogger";
-
-type SSEMode = "normal" | "delay" | "missing" | "duplicate" | "error";
+import { API_ENDPOINTS } from "@/utils/constants";
+import { clearIntervalSafely } from "@/utils/timeout";
 
 export function useMockSSE() {
   const [streamingText, setStreamingText] = useRecoilState(streamingTextAtom);
@@ -41,12 +41,9 @@ export function useMockSSE() {
       setNetworkErrorModalOpen(false);
 
       // 기존 interval 정리
-      if (displayIntervalRef.current) {
-        clearInterval(displayIntervalRef.current);
-        displayIntervalRef.current = null;
-      }
+      clearIntervalSafely(displayIntervalRef.current);
+      displayIntervalRef.current = null;
       chunkBufferRef.current = [];
-      shouldDisplayRef.current = true;
       shouldDisplayRef.current = true;
 
       logEvent("event", "sse", `스트림 시작: ${mode} 모드`, { mode, question });
@@ -55,14 +52,7 @@ export function useMockSSE() {
       abortControllerRef.current = abortController;
 
       try {
-        console.log("[useMockSSE] Sending POST request to /api/suggestions", {
-          question,
-          mode,
-        });
-
-        const url = new URL("http://localhost:3001/api/suggestions");
-
-        const response = await fetch(url.toString(), {
+        const response = await fetch(API_ENDPOINTS.SUGGESTIONS, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -70,11 +60,6 @@ export function useMockSSE() {
           },
           body: JSON.stringify({ question, mode }),
           signal: abortController.signal,
-        });
-
-        console.log("[useMockSSE] Response received", {
-          status: response.status,
-          ok: response.ok,
         });
 
         // 500 에러 처리
@@ -102,7 +87,6 @@ export function useMockSSE() {
         const decoder = new TextDecoder("utf-8");
 
         logEvent("event", "sse", "스트림 연결 성공", {});
-        console.log("[useMockSSE] Stream reader created, starting to read...");
 
         let buffer = "";
         isReadingRef.current = true;
@@ -110,22 +94,13 @@ export function useMockSSE() {
         while (isReadingRef.current) {
           // 중단 플래그 체크
           if (!isReadingRef.current || !shouldDisplayRef.current) {
-            console.log("[useMockSSE] Reading stopped by flag");
             break;
           }
 
-          console.log("[useMockSSE] Calling reader.read()...");
           const readResult = await reader.read();
-          console.log("[useMockSSE] reader.read() result:", {
-            done: readResult.done,
-            hasValue: !!readResult.value,
-            valueLength: readResult.value?.length,
-          });
-
           const { done, value } = readResult;
 
           if (done) {
-            console.log("[useMockSSE] SSE stream done");
             logEvent("event", "sse", "스트림 완료", {});
             // 버퍼에 남은 청크가 모두 표시될 때까지 대기
             // interval이 버퍼를 비우면 자동으로 정리됨
@@ -147,44 +122,26 @@ export function useMockSSE() {
 
           if (value) {
             const chunk = decoder.decode(value, { stream: true });
-            console.log(
-              "[useMockSSE] Raw chunk received:",
-              chunk.substring(0, 200)
-            );
             buffer += chunk;
 
             // 여러 SSE 메시지가 한 번에 올 수 있으므로 분리
             const messages = buffer.split("\n\n");
             buffer = messages.pop() || "";
 
-            console.log("[useMockSSE] Split into", messages.length, "messages");
-
             for (const message of messages) {
               if (!message.trim()) {
-                console.log("[useMockSSE] Empty message, skipping");
                 continue;
               }
 
               // 주석 라인(`: `로 시작)은 무시
               if (message.trim().startsWith(": ")) {
-                console.log(
-                  "[useMockSSE] Comment line, skipping:",
-                  message.trim()
-                );
                 continue;
               }
 
-              console.log(
-                "[useMockSSE] Processing message:",
-                message.substring(0, 300)
-              );
-
               if (message.trim() && message.startsWith("data: ")) {
                 const dataStr = message.slice(6).trim();
-                console.log("[useMockSSE] Data string:", dataStr);
                 try {
                   const data: SSEChunk = JSON.parse(dataStr);
-                  console.log("[useMockSSE] Parsed data:", data);
 
                   if (data.error) {
                     console.error("[useMockSSE] SSE Error:", data.error);
@@ -192,17 +149,14 @@ export function useMockSSE() {
                       error: data.error,
                     });
                     isReadingRef.current = false;
-                    if (displayIntervalRef.current) {
-                      clearInterval(displayIntervalRef.current);
-                      displayIntervalRef.current = null;
-                    }
+                    clearIntervalSafely(displayIntervalRef.current);
+                    displayIntervalRef.current = null;
                     chunkBufferRef.current = [];
                     setIsStreaming(false);
                     break;
                   }
 
                   if (data.done) {
-                    console.log("[useMockSSE] SSE stream done (done flag)");
                     logEvent("event", "sse", "스트림 완료", {});
                     // 버퍼에 남은 청크를 모두 표시한 후 스트리밍 종료
                     // interval이 자동으로 정리됨
@@ -213,16 +167,8 @@ export function useMockSSE() {
                   if (data.chunk) {
                     // 중단 플래그 체크
                     if (!isReadingRef.current || !shouldDisplayRef.current) {
-                      console.log(
-                        "[useMockSSE] Chunk received but stopped, ignoring"
-                      );
                       break;
                     }
-
-                    console.log(
-                      "[useMockSSE] Chunk received (buffered):",
-                      data.chunk
-                    );
 
                     // 중복 체크
                     const chunk = data.chunk;
@@ -232,7 +178,6 @@ export function useMockSSE() {
                         (item) => item.chunk === chunk
                       )
                     ) {
-                      console.log("[useMockSSE] Duplicate chunk ignored");
                       continue;
                     }
 
@@ -254,20 +199,16 @@ export function useMockSSE() {
                       displayIntervalRef.current = setInterval(() => {
                         // 중지되었는지 확인 (매번 체크)
                         if (!shouldDisplayRef.current) {
-                          if (displayIntervalRef.current) {
-                            clearInterval(displayIntervalRef.current);
-                            displayIntervalRef.current = null;
-                          }
+                          clearIntervalSafely(displayIntervalRef.current);
+                          displayIntervalRef.current = null;
                           return;
                         }
 
                         if (chunkBufferRef.current.length > 0) {
                           // 다시 한 번 체크 (버퍼에서 꺼내기 전)
                           if (!shouldDisplayRef.current) {
-                            if (displayIntervalRef.current) {
-                              clearInterval(displayIntervalRef.current);
-                              displayIntervalRef.current = null;
-                            }
+                            clearIntervalSafely(displayIntervalRef.current);
+                            displayIntervalRef.current = null;
                             return;
                           }
                           const nextItem = chunkBufferRef.current.shift()!;
@@ -293,8 +234,8 @@ export function useMockSSE() {
                               return prev + nextItem.chunk;
                             });
                           }
-                        } else if (displayIntervalRef.current) {
-                          clearInterval(displayIntervalRef.current);
+                        } else {
+                          clearIntervalSafely(displayIntervalRef.current);
                           displayIntervalRef.current = null;
                         }
                       }, intervalMs);
@@ -313,13 +254,10 @@ export function useMockSSE() {
                 }
               }
             }
-          } else {
-            console.warn("[useMockSSE] No value in read result");
           }
         }
       } catch (error: unknown) {
         if (error instanceof Error && error.name === "AbortError") {
-          console.log("[useMockSSE] Stream aborted by user");
           logEvent("event", "sse", "스트림 사용자 중단", {});
           isReadingRef.current = false;
           if (readerRef.current) {
@@ -330,10 +268,8 @@ export function useMockSSE() {
             }
             readerRef.current = null;
           }
-          if (displayIntervalRef.current) {
-            clearInterval(displayIntervalRef.current);
-            displayIntervalRef.current = null;
-          }
+          clearIntervalSafely(displayIntervalRef.current);
+          displayIntervalRef.current = null;
           chunkBufferRef.current = [];
           setIsStreaming(false);
           return;
@@ -347,10 +283,8 @@ export function useMockSSE() {
         logEvent("event", "network", "스트림 연결 실패", {
           error: errorMessage,
         });
-        if (displayIntervalRef.current) {
-          clearInterval(displayIntervalRef.current);
-          displayIntervalRef.current = null;
-        }
+        clearIntervalSafely(displayIntervalRef.current);
+        displayIntervalRef.current = null;
         chunkBufferRef.current = [];
         setIsStreaming(false);
         setNetworkErrorModalOpen(true);
@@ -360,8 +294,6 @@ export function useMockSSE() {
   );
 
   const stopStream = useCallback(() => {
-    console.log("[useMockSSE] stopStream called");
-
     // 1. 표시 중단 플래그를 먼저 설정 (가장 중요!)
     shouldDisplayRef.current = false;
 
@@ -375,10 +307,8 @@ export function useMockSSE() {
     }
 
     // 4. display interval 정리 (즉시)
-    if (displayIntervalRef.current) {
-      clearInterval(displayIntervalRef.current);
-      displayIntervalRef.current = null;
-    }
+    clearIntervalSafely(displayIntervalRef.current);
+    displayIntervalRef.current = null;
 
     // 5. 버퍼 비우기 (이미 interval이 정리되었으므로 안전)
     chunkBufferRef.current = [];

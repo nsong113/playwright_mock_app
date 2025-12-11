@@ -3,8 +3,8 @@ import { streamingTextAtom, isStreamingAtom, selectedModeAtom } from "@/store";
 import { useMockSSE } from "@/hooks/useMockSSE";
 import { StateMachine } from "./StateMachine";
 import { SuggestionCards } from "./SuggestionCards";
-
-type SSEMode = "normal" | "delay" | "error";
+import { SSEMode } from "@/types";
+import { SSE_MODES } from "@/utils/constants";
 
 export function VoiceSection() {
   const streamingText = useRecoilValue(streamingTextAtom);
@@ -58,51 +58,33 @@ export function VoiceSection() {
         >
           {/* 상태 코드 */}
           <div className="flex flex-wrap gap-4 justify-center mt-3 mb-3 w-full">
-            <div className="flex flex-col gap-1 items-center">
-              <button
-                onClick={() => handleModeSelect("normal")}
-                className={`px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600 ${
-                  selectedMode === "normal"
-                    ? "ring-2 ring-blue-300 ring-offset-2"
-                    : ""
-                }`}
-              >
-                정상
-              </button>
-              <span className="text-[10px] text-gray-400">
-                정상: 일반 스트리밍
-              </span>
-            </div>
-            <div className="flex flex-col gap-1 items-center">
-              <button
-                onClick={() => handleModeSelect("delay")}
-                className={`px-3 py-1 text-sm text-white bg-yellow-500 rounded hover:bg-yellow-600 ${
-                  selectedMode === "delay"
-                    ? "ring-2 ring-yellow-300 ring-offset-2"
-                    : ""
-                }`}
-              >
-                지연
-              </button>
-              <span className="text-[10px] text-gray-400">
-                지연: 청크 사이 지연
-              </span>
-            </div>
-            <div className="flex flex-col gap-1 items-center">
-              <button
-                onClick={() => handleModeSelect("error")}
-                className={`px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600 ${
-                  selectedMode === "error"
-                    ? "ring-2 ring-red-300 ring-offset-2"
-                    : ""
-                }`}
-              >
-                에러
-              </button>
-              <span className="text-[10px] text-gray-400">
-                에러: 중간에 연결 끊김
-              </span>
-            </div>
+            {SSE_MODES.map((modeConfig) => {
+              const isSelected = selectedMode === modeConfig.value;
+              const colorClasses = {
+                normal: "bg-blue-500 hover:bg-blue-600 ring-blue-300",
+                delay: "bg-yellow-500 hover:bg-yellow-600 ring-yellow-300",
+                error: "bg-red-500 hover:bg-red-600 ring-red-300",
+              }[modeConfig.value];
+
+              return (
+                <div
+                  key={modeConfig.value}
+                  className="flex flex-col gap-1 items-center"
+                >
+                  <button
+                    onClick={() => handleModeSelect(modeConfig.value)}
+                    className={`px-3 py-1 text-sm text-white rounded ${colorClasses} ${
+                      isSelected ? "ring-2 ring-offset-2" : ""
+                    }`}
+                  >
+                    {modeConfig.label}
+                  </button>
+                  <span className="text-[10px] text-gray-400">
+                    {modeConfig.description}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* 추천 질문 카드 영역 */}
