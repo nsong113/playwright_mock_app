@@ -85,7 +85,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 // POST /api/suggestions - 질문과 mode를 받아서 SSE 스트림 응답
-router.post("/", (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   console.log("[Suggestions API POST] Request received", {
     body: req.body,
   });
@@ -135,24 +135,27 @@ router.post("/", (req: Request, res: Response) => {
   });
 
   // SSE 헤더 설정
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
-  res.setHeader("X-Accel-Buffering", "no");
-
-  // 헤더를 즉시 전송
-  if (typeof (res as any).flushHeaders === "function") {
-    (res as any).flushHeaders();
-  }
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "X-Accel-Buffering": "no",
+    "Transfer-Encoding": "chunked",
+  });
 
   console.log("[Suggestions API POST] SSE headers sent, starting stream");
 
   // 초기 메시지 전송
   res.write(": connection established\n\n");
   res.write(": stream started\n\n");
+
+  // 초기 메시지 flush
+  if (typeof (res as any).flush === "function") {
+    (res as any).flush();
+  }
 
   let isStreamingActive = true;
   let currentIndex = 0;
@@ -189,13 +192,26 @@ router.post("/", (req: Request, res: Response) => {
 
       // Promise 기반으로 순차적으로 청크 전송
       const sendChunksSequentially = async () => {
+        console.log("[normal mode] sendChunksSequentially started");
         for (let i = 0; i < chunks.length; i++) {
+          console.log(
+            `[normal mode] Loop iteration ${i}, isStreamingActive=${isStreamingActive}, writableEnded=${res.writableEnded}, destroyed=${res.destroyed}`
+          );
+
           if (!isStreamingActive || res.writableEnded || res.destroyed) {
-            console.log("[normal mode] Stream inactive or ended at chunk", i);
+            console.log("[normal mode] Stream inactive or ended at chunk", i, {
+              isStreamingActive,
+              writableEnded: res.writableEnded,
+              destroyed: res.destroyed,
+            });
             break;
           }
 
-          console.log(`[normal mode] Sending chunk ${i + 1}/${chunks.length}`);
+          console.log(
+            `[normal mode] Sending chunk ${i + 1}/${chunks.length}: "${
+              chunks[i]
+            }"`
+          );
 
           const chunkSent = sendSSEChunk(
             res,
@@ -204,6 +220,17 @@ router.post("/", (req: Request, res: Response) => {
               index: i,
             })
           );
+
+          // 각 청크 전송 후 즉시 flush
+          if (typeof (res as any).flush === "function") {
+            try {
+              (res as any).flush();
+            } catch (e) {
+              // flush 에러 무시
+            }
+          }
+
+          console.log(`[normal mode] Chunk ${i} sent result: ${chunkSent}`);
 
           if (!chunkSent) {
             console.warn(
@@ -215,11 +242,12 @@ router.post("/", (req: Request, res: Response) => {
 
           currentIndex = i + 1;
 
-          // 다음 청크 전에 20ms 대기 (스트리밍 효과)
-          if (i < chunks.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 20));
-          }
+          // 딜레이 없이 모든 청크를 즉시 전송 (프론트에서 스트리밍 효과 처리)
         }
+        console.log(
+          "[normal mode] Loop completed, currentIndex:",
+          currentIndex
+        );
 
         // 모든 청크 전송 완료
         try {
@@ -235,28 +263,27 @@ router.post("/", (req: Request, res: Response) => {
         }
       };
 
-      // 비동기 함수 실행
-      sendChunksSequentially();
+      // 비동기 함수 실행 (await로 완료될 때까지 대기)
+      await sendChunksSequentially();
 
       break;
     }
 
     case "delay": {
-      // 지연 모드: 각 청크 사이에 긴 지연
+      // 지연 모드: 딜레이 없이 즉시 전송 (프론트에서 긴 간격으로 표시)
       const sendChunksWithDelay = async () => {
         for (let i = 0; i < chunks.length; i++) {
           if (!isStreamingActive || res.writableEnded || res.destroyed) {
             break;
           }
           sendSSEChunk(res, JSON.stringify({ chunk: chunks[i], index: i }));
-          if (i < chunks.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
         }
         sendSSEChunk(res, JSON.stringify({ done: true }));
-        res.end();
+        if (!res.writableEnded && !res.destroyed) {
+          res.end();
+        }
       };
-      sendChunksWithDelay();
+      await sendChunksWithDelay();
       break;
     }
 
@@ -271,14 +298,13 @@ router.post("/", (req: Request, res: Response) => {
           if (i !== 2 && i !== 4) {
             sendSSEChunk(res, JSON.stringify({ chunk: chunks[i], index: i }));
           }
-          if (i < chunks.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 20));
-          }
         }
         sendSSEChunk(res, JSON.stringify({ done: true }));
-        res.end();
+        if (!res.writableEnded && !res.destroyed) {
+          res.end();
+        }
       };
-      sendChunksWithMissing();
+      await sendChunksWithMissing();
       break;
     }
 
@@ -292,20 +318,18 @@ router.post("/", (req: Request, res: Response) => {
           sendSSEChunk(res, JSON.stringify({ chunk: chunks[i], index: i }));
           // 2번째 청크를 중복 전송
           if (i === 1) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
             sendSSEChunk(
               res,
               JSON.stringify({ chunk: chunks[i], index: i, duplicate: true })
             );
           }
-          if (i < chunks.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 20));
-          }
         }
         sendSSEChunk(res, JSON.stringify({ done: true }));
-        res.end();
+        if (!res.writableEnded && !res.destroyed) {
+          res.end();
+        }
       };
-      sendChunksWithDuplicate();
+      await sendChunksWithDuplicate();
       break;
     }
 
@@ -319,18 +343,19 @@ router.post("/", (req: Request, res: Response) => {
           if (i === Math.floor(chunks.length / 2)) {
             // 중간에 에러 발생
             sendSSEChunk(res, JSON.stringify({ error: "Connection lost" }));
-            res.end();
+            if (!res.writableEnded && !res.destroyed) {
+              res.end();
+            }
             return;
           }
           sendSSEChunk(res, JSON.stringify({ chunk: chunks[i], index: i }));
-          if (i < chunks.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 20));
-          }
         }
         sendSSEChunk(res, JSON.stringify({ done: true }));
-        res.end();
+        if (!res.writableEnded && !res.destroyed) {
+          res.end();
+        }
       };
-      sendChunksWithError();
+      await sendChunksWithError();
       break;
     }
 
