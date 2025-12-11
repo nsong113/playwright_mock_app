@@ -1,139 +1,48 @@
-# QA Mock Portfolio - Robot Control System
+# 하이브리드 안내 로봇 QA Mock 콘솔
 
-Playwright 자동화 테스트 포트폴리오용 Mock 애플리케이션
+![메인 화면](./frontend/public/readMeMD/page.png)
 
-## 프로젝트 구조
+## 프로젝트 소개
 
-```
-qa-mock-portfolio/
-├── frontend/          # React 프론트엔드
-│   ├── src/
-│   │   ├── components/    # UI 컴포넌트
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── store/         # Recoil 상태 관리
-│   │   └── types/         # TypeScript 타입 정의
-│   └── package.json
-├── mock-server/       # Express Mock 서버
-│   ├── src/
-│   │   ├── routes/        # API 라우트
-│   │   └── index.ts       # 서버 진입점
-│   └── package.json
-└── README.md
-```
+실제 Temi 안내 로봇 프로젝트에서 겪은 스트리밍·이벤트·상태 이슈를 재현하고, 자동화 테스트를 위한 QA 포트폴리오용 Mock 콘솔입니다. 브라우저에서 실제 장애 패턴을 재현하여 UI와 로그 반응을 검증할 수 있습니다.
 
-## 주요 기능
+---
 
-### 1. 상태 머신
+## 화면 구성 vs 실제 이슈 매핑
 
-- **상태**: IDLE, MOVING, STANDBY, ERROR, CHARGING
-- 상태 전환 시각화 및 실시간 업데이트
+| UI 영역                                | 실제 프로젝트에서 겪은 이슈                                                    | Mock에서의 목적                                                              | 자동화 테스트 포인트                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **① 로봇 실시간 상태 카드**            | 로봇의 실제 상태와 UI/로그 상태 불일치 (예: IDLE로 표시되지만 실제로는 MOVING) | 상태머신(IDLE / MOVING / ERROR / CHARGING)을 항상 기준점으로 일관 표시       | 이벤트 전후 상태 일관성 검증, 잘못된 상태 전환 방지                                      |
+| **② LLM 응답 스트리밍(SSE) 장애 재현** | SSE 응답이 지연·누락·중복·500 에러로 인해 잘리거나 섞임, onPremise환경에서 작동하는 로봇이었기에 네트워크 이슈가 치명적임                        | 버튼 몇 개로 스트리밍 장애 패턴을 재현하여 UI가 깨지는 모습과 복구 과정 관찰 | 정상/지연/에러 모드별 메시지 표시, 로딩/에러 UI, 연결 끊김 후 재요청 동작                |
+| **③ 로봇 ↔ 앱 통신(Mock Bridge)**      | 도착·배터리·에러 이벤트가 중복/누락되어 운영자가 잘못된 판단                   | 실제 SDK 없이 도착/배터리/에러 이벤트를 수동으로 조합하여 시나리오 테스트    | 특정 순서/조합(예: 도착 후 배터리 10%)에서 상태/로그 일관성 확인                         |
+| **④ 로봇 이벤트 로그**                 | 로그 정보가 부족하여 장애 원인 분석이 어려움                                   | 이동/SSE/Bridge 이벤트를 단일 타임라인으로 수집·기록                         | 각 이벤트가 올바른 타입/파라미터로 기록되는지, 최신 이벤트가 항상 상단에 표시되는지 확인 |
 
-### 2. Mock SSE 서버
+---
 
-- **정상 모드**: 일반적인 스트리밍 응답
-- **지연 모드**: 각 청크 사이 긴 지연
-- **누락 모드**: 일부 청크 건너뛰기
-- **중복 모드**: 일부 청크 중복 전송
-- **에러 모드**: 중간에 연결 끊김 시뮬레이션
+## 왜 이 4가지만 살렸는지
 
-### 3. Mock Bridge 이벤트
+| 포함/제외 | 항목                                            | 결정 이유                                                                                  |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **포함**  | 상태머신 / SSE / Bridge 이벤트 / 로그           | Temi 프로젝트에서 실제로 장애·오작동이 가장 많이 발생했던 구간이라 리스크 기반으로 집중 👏 |
+| 제외      | 로그인/권한/사용자 CRUD                         | 일반 웹 서비스와 유사하고, 로봇 도메인 특성이 희석되기 때문에 포폴 메시지에 도움이 적음    |
+| 제외      | 실제 LLM, STT/TTS, 음성 인식                    | 외부 서비스 의존성이 크고, 테스트 재현이 어려워 QA 포폴에서 통제하기 힘든 영역             |
+| 제외      | 복잡한 비즈니스 플로우 (예약, 시나리오 편집 등) | 화면은 화려해지지만, 테스트 전략·리스크 설명이 흐려져서 과감히 범위 밖으로 설정            |
 
-- `onArrival`: 로봇 도착 이벤트
-- `onBatteryUpdated`: 배터리 레벨 업데이트
-- `onBatteryStatusChanged`: 충전 상태 변경
-- `onStandbyModeUpdated`: 대기 모드 전환
-- `onError`: 에러 발생
+**복잡한 건 다 빼고, 사고 나기 좋은 구간만 남겼습니다.**
 
-### 4. UI 컴포넌트
+---
 
-- **StateMachine**: 로봇 상태 표시
-- **BatteryIndicator**: 배터리 레벨 및 충전 상태
-- **SSEViewer**: SSE 스트리밍 테스트 UI
-- **RobotControl**: 로봇 이동 제어
-- **MockBridgeControl**: Bridge 이벤트 수동 트리거
-- **ErrorModal**: 에러 모달
-- **MovingModal**: 이동 중 모달
+### 사용 방법
 
-## 시작하기
+1. **로봇 이동**: 위치 버튼을 눌러 로봇 이동을 시뮬레이션
+2. **SSE 스트리밍**: 질문 선택 → 모드(정상/지연/에러) 선택 → 스트리밍 시작
+3. **Bridge 이벤트**: Mock Bridge Control에서 도착/배터리/에러 이벤트 수동 트리거
+4. **이벤트 로그**: 우측 하단 패널에서 모든 이벤트를 타임라인으로 확인
 
-### 1. 의존성 설치
-
-```bash
-# 프론트엔드
-cd frontend
-yarn install
-
-# Mock 서버
-cd ../mock-server
-yarn install
-```
-
-### 2. 개발 서버 실행
-
-**터미널 1 - Mock 서버:**
-
-```bash
-cd mock-server
-yarn dev
-```
-
-서버는 `http://localhost:3001`에서 실행됩니다.
-
-**터미널 2 - 프론트엔드:**
-
-```bash
-cd frontend
-yarn dev
-```
-
-프론트엔드는 `http://localhost:3000`에서 실행됩니다.
-
-### 3. 사용 방법
-
-1. 브라우저에서 `http://localhost:3000` 접속
-2. **로봇 이동 제어**: 위치 버튼 클릭하여 이동 시뮬레이션
-3. **SSE 스트리밍**: 다양한 모드로 스트리밍 테스트
-4. **Bridge 이벤트**: Mock Bridge Control에서 이벤트 수동 트리거
+---
 
 ## 기술 스택
 
-- **Frontend**:
-  - React 18
-  - TypeScript
-  - Vite
-  - Recoil (상태 관리)
-  - Tailwind CSS
-- **Mock Server**:
-  - Express
-  - TypeScript
-  - Server-Sent Events (SSE)
-  - CORS
+- **Frontend**: React 18, TypeScript, Vite, Recoil, Tailwind CSS
+- **Mock Server**: Express, TypeScript, Server-Sent Events (SSE)
 
-## API 엔드포인트
-
-### SSE 스트리밍
-
-```
-GET /api/stream/chat?mode=normal|delay|missing|duplicate|error&message=텍스트
-```
-
-### Bridge 이벤트 (테스트용)
-
-```
-POST /api/bridge/arrival
-POST /api/bridge/battery
-POST /api/bridge/standby
-POST /api/bridge/error
-```
-
-## 커밋 전략 제안
-
-포트폴리오용이므로 기능별로 커밋을 나누는 것을 권장합니다:
-
-1. 프로젝트 초기 설정
-2. Mock 서버 기본 구조
-3. SSE 스트리밍 구현
-4. 상태 머신 구현
-5. Bridge 이벤트 시스템
-6. UI 컴포넌트 구현
-7. 통합 및 개선
