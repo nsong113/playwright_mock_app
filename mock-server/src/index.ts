@@ -3,6 +3,7 @@ import cors from "cors";
 import { sseRouter } from "./routes/sse.js";
 import { bridgeRouter } from "./routes/bridge.js";
 import { suggestionsRouter } from "./routes/suggestions.js";
+import { authRouter } from "./routes/auth.js";
 
 const app = express();
 const PORT = 3001;
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 });
 
 // 라우트 설정
+app.use("/api/auth", authRouter);
 app.use("/api/stream", sseRouter);
 app.use("/api/bridge", bridgeRouter);
 app.use("/api/suggestions", suggestionsRouter);

@@ -33,7 +33,7 @@ export function VoiceSection() {
         <div className="mb-3">
           <div className="flex gap-2 items-center mb-1">
             <h3 className="text-lg font-semibold text-gray-700">
-              ② LLM 응답 스트리밍(SSE) 장애 재현
+              ② LLM 응답 스트리밍 장애 재현
             </h3>
           </div>
           <p className="mb-3 text-xs text-gray-600">
@@ -74,8 +74,7 @@ export function VoiceSection() {
                   <button
                     onClick={() => handleModeSelect(modeConfig.value)}
                     className={`px-3 py-1 text-sm text-white rounded ${colorClasses} ${
-                      isSelected ? "ring-2 ring-offset-2" : ""
-                    }`}
+                      isSelected ? "ring-2 ring-offset-2" : ""}`}
                   >
                     {modeConfig.label}
                   </button>

@@ -130,3 +130,15 @@ export const helpModalOpenAtom = atom<boolean>({
   key: "helpModalOpenAtom",
   default: false,
 });
+
+// 인증 상태
+export const isAuthenticatedAtom = atom<boolean>({
+  key: "isAuthenticatedAtom",
+  default: false,
+});
+
+// 인증 토큰
+export const authTokenAtom = atom<string | null>({
+  key: "authTokenAtom",
+  default: null,
+});
