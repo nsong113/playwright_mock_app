@@ -50,6 +50,12 @@ export function LoginForm() {
             하이브리드 안내 로봇 QA Mock 콘솔
           </h1>
           <p className="text-sm text-gray-600">로그인하여 콘솔에 접근하세요.</p>
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-800 font-medium">
+              테스트 계정: ID <span className="font-mono font-bold">qa</span>, 비밀번호{" "}
+              <span className="font-mono font-bold">qa123</span>
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -31,15 +31,15 @@ export function MovingModal() {
     };
   }, []);
 
-  // MOVING 상태이거나 비상 정지로 인한 IDLE 상태일 때 표시
+  // MOVING 상태이거나 비상 정지로 인한 ERROR 상태일 때 표시
   if (
     robotState !== "MOVING" &&
-    !(robotState === "IDLE" && isEmergencyStopped)
+    !(robotState === "ERROR" && isEmergencyStopped)
   ) {
     return null;
   }
 
-  const isPaused = robotState === "IDLE" && isEmergencyStopped;
+  const isPaused = robotState === "ERROR" && isEmergencyStopped;
 
   const handleEmergencyStop = () => {
     // 진행 중인 이동 timeout 취소
@@ -47,13 +47,13 @@ export function MovingModal() {
     setMovementTimeoutId(null);
 
     setIsEmergencyStopped(true);
-    setRobotState("IDLE");
+    setRobotState("ERROR");
     logEvent("event", "system", "비상 정지 활성화", {
       action: "emergency_stop",
     });
-    logEvent("state-change", "system", "상태 변경: MOVING → IDLE (비상 정지)", {
+    logEvent("state-change", "system", "상태 변경: MOVING → ERROR (비상 정지)", {
       from: "MOVING",
-      to: "IDLE",
+      to: "ERROR",
       reason: "emergency_stop",
     });
   };
@@ -67,8 +67,8 @@ export function MovingModal() {
       action: "resume",
       targetLocation,
     });
-    logEvent("state-change", "system", "상태 변경: IDLE → MOVING (재개)", {
-      from: "IDLE",
+    logEvent("state-change", "system", "상태 변경: ERROR → MOVING (재개)", {
+      from: "ERROR",
       to: "MOVING",
       targetLocation,
     });
