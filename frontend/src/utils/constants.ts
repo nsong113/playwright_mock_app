@@ -1,6 +1,9 @@
 // API 엔드포인트
+// Vercel 배포 시 같은 도메인에 있으므로 빈 문자열 사용
+// 개발 환경에서는 localhost:3001 사용
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://localhost:3001" : "");
 
 export const API_ENDPOINTS = {
   AUTH: {
