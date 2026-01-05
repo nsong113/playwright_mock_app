@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend && yarn build",
+  "outputDirectory": "frontend/dist",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 10
+    }
+  }
+}
+

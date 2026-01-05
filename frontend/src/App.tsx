@@ -14,7 +14,7 @@ import { useMockBridge } from "./hooks/useMockBridge";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useSuggestions } from "./hooks/useSuggestions";
 import { isAuthenticatedAtom, authTokenAtom } from "./store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_ENDPOINTS } from "./utils/constants";
 
@@ -106,6 +106,7 @@ function AppContent() {
   const isAuthenticated = useRecoilValue(isAuthenticatedAtom);
   const setIsAuthenticated = useSetRecoilState(isAuthenticatedAtom);
   const setAuthToken = useSetRecoilState(authTokenAtom);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // 페이지 로드 시 localStorage에서 토큰 확인
   useEffect(() => {
@@ -114,7 +115,13 @@ function AppContent() {
       setAuthToken(savedToken);
       setIsAuthenticated(true);
     }
+    setIsCheckingAuth(false);
   }, [setAuthToken, setIsAuthenticated]);
+
+  // 인증 확인 중이면 로딩 표시 (또는 아무것도 표시하지 않음)
+  if (isCheckingAuth) {
+    return null; // 또는 로딩 스피너
+  }
 
   // 인증되지 않은 경우 로그인 화면 표시
   if (!isAuthenticated) {
